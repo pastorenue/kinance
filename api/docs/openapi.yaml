@@ -1,0 +1,843 @@
+openapi: 3.1.0
+info:
+  title: Kinance API
+  version: 1.0.0
+  description: |
+    Kinance API provides endpoints for user authentication, profile management, budgeting, transactions, and receipt processing. 
+    This documentation is comprehensive and organized by functional groups for easy navigation and integration.
+tags:
+  - name: Health
+    description: API health and status endpoints
+  - name: Authentication
+    description: Endpoints for user registration, login, and token management
+  - name: User
+    description: Endpoints for user profile and family management
+  - name: Budget
+    description: Endpoints for managing budgets
+  - name: Transaction
+    description: Endpoints for managing financial transactions
+  - name: Receipt
+    description: Endpoints for uploading and retrieving receipts
+paths:
+  /health:
+    get:
+      tags:
+        - Health
+      summary: Health check
+      description: |
+        Returns the current health status of the Kinance API and a timestamp. Useful for monitoring and uptime checks.
+      responses:
+        '200':
+          description: Health status OK. Indicates the API is running and reachable.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    description: Always "ok" if the API is healthy.
+                  timestamp:
+                    type: string
+                    format: date-time
+                    description: Current server time in ISO 8601 format.
+  /api/v1/auth/register:
+    post:
+      tags:
+        - Authentication
+      summary: Register a new user
+      description: |
+        Creates a new user account. Requires email, password, and basic profile information. 
+        The password must meet security requirements. On success, the user can log in immediately.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+                - first_name
+                - last_name
+              properties:
+                email:
+                  type: string
+                  format: email
+                  description: User's email address. Must be unique.
+                password:
+                  type: string
+                  format: password
+                  description: User's password. Minimum 8 characters, must include letters and numbers.
+                first_name:
+                  type: string
+                  /api/v1/address:
+                    post:
+                      tags:
+                        - User
+                      summary: Create address
+                      description: |
+                        Creates a new address for the authenticated user. Useful for adding home, work, or other addresses to the user profile.
+                      requestBody:
+                        required: true
+                        content:
+                          application/json:
+                            schema:
+                              type: object
+                              required:
+                                - street
+                                - city
+                                - state
+                                - postal_code
+                                - country
+                              properties:
+                                street:
+                                  type: string
+                                  description: Street address.
+                                city:
+                                  type: string
+                                  description: City name.
+                                state:
+                                  type: string
+                                  description: State or province.
+                                postal_code:
+                                  type: string
+                                  description: Postal or ZIP code.
+                                country:
+                                  type: string
+                                  description: Country name.
+                      responses:
+                        '201':
+                          description: Address created successfully.
+                        '400':
+                          description: Invalid input. One or more fields are missing or invalid.
+                        '401':
+                          description: Unauthorized. Missing or invalid JWT token.
+                  /api/v1/address/{id}:
+                    put:
+                      tags:
+                        - User
+                      summary: Update address
+                      description: |
+                        Updates an existing address for the authenticated user. Only provided fields will be updated. Useful for keeping address information current.
+                      requestBody:
+                        required: true
+                        content:
+                          application/json:
+                            schema:
+                              type: object
+                              properties:
+                                street:
+                                  type: string
+                                  description: New street address.
+                                city:
+                                  type: string
+                                  description: New city name.
+                                state:
+                                  type: string
+                                  description: New state or province.
+                                postal_code:
+                                  type: string
+                                  description: New postal or ZIP code.
+                                country:
+                                  type: string
+                                  description: New country name.
+                      responses:
+                        '200':
+                          description: Address updated successfully.
+                        '400':
+                          description: Invalid input. One or more fields are invalid.
+                        '401':
+                          description: Unauthorized. Missing or invalid JWT token.
+                properties:
+                  access_token:
+                    type: string
+                    description: New JWT access token.
+        '401':
+          description: Invalid refresh token. Token may be expired or malformed.
+  /api/v1/auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: Login
+      description: |
+        Authenticates a user using email and password. Returns JWT access and refresh tokens for session management.
+        Tokens must be included in the Authorization header for protected endpoints.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                  description: Registered email address.
+                password:
+                  type: string
+                  format: password
+                  description: User's password.
+      responses:
+        '200':
+          description: Login successful. Returns JWT access and refresh tokens.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access_token:
+                    type: string
+                    description: JWT access token for API requests.
+                  refresh_token:
+                    type: string
+                    description: JWT refresh token for renewing access.
+        '401':
+          description: Invalid credentials. Email or password is incorrect.
+  /api/v1/auth/refresh:
+    post:
+      tags:
+        - Authentication
+      summary: Refresh JWT token
+      description: |
+        Renews the JWT access token using a valid refresh token. 
+        Use this endpoint to maintain a session without re-authenticating.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - refresh_token
+              properties:
+                refresh_token:
+                  type: string
+                  description: Valid JWT refresh token.
+      responses:
+        '200':
+          description: Token refreshed. Returns a new JWT access token.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access_token:
+                    type: string
+                    description: New JWT access token.
+        '401':
+          description: Invalid refresh token. Token may be expired or malformed.
+  /api/v1/users/profile:
+    get:
+      tags:
+        - User
+      summary: Get user profile
+      description: |
+        Returns the authenticated user's profile information, including contact details, address, and profile picture. 
+        Requires a valid JWT access token in the Authorization header.
+      responses:
+        '200':
+          description: User profile returned successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: User's unique identifier.
+                  email:
+                    type: string
+                    description: User's email address.
+                  first_name:
+                    type: string
+                    description: User's first name.
+                  last_name:
+                    type: string
+                    description: User's last name.
+                  phone:
+                    type: string
+                    description: User's phone number.
+                  address:
+                    type: object
+                    description: User's address information.
+                    properties:
+                      street:
+                        type: string
+                        description: Street address.
+                      city:
+                        type: string
+                        description: City name.
+                      state:
+                        type: string
+                        description: State or province.
+                      postal_code:
+                        type: string
+                        description: Postal or ZIP code.
+                      country:
+                        type: string
+                        description: Country name.
+                  date_of_birth:
+                    type: string
+                    description: User's date of birth (YYYY-MM-DD).
+                  profile_picture:
+                    type: string
+                    description: URL to user's profile picture.
+        '401':
+          description: Unauthorized. Missing or invalid JWT token.
+    put:
+      tags:
+        - User
+      summary: Update user profile
+      description: |
+        Updates the authenticated user's profile information. Only provided fields will be updated. 
+        Requires a valid JWT access token in the Authorization header.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                first_name:
+                  type: string
+                  description: New first name.
+                last_name:
+                  type: string
+                  description: New last name.
+                phone:
+                  type: string
+                  description: New phone number.
+                address:
+                  type: object
+                  description: New address information.
+                  properties:
+                    street:
+                      type: string
+                      description: Street address.
+                    city:
+                      type: string
+                      description: City name.
+                    state:
+                      type: string
+                      description: State or province.
+                    postal_code:
+                      type: string
+                      description: Postal or ZIP code.
+                    country:
+                      type: string
+                      description: Country name.
+                date_of_birth:
+                  type: string
+                  description: New date of birth (YYYY-MM-DD).
+                profile_picture:
+                  type: string
+                  description: New profile picture URL.
+      responses:
+        '200':
+          description: Profile updated successfully.
+        '400':
+          description: Invalid input. One or more fields are invalid.
+        '401':
+          description: Unauthorized. Missing or invalid JWT token.
+  /api/v1/address:
+    post:
+      tags:
+        - User
+      summary: Create address
+      description: |
+        Creates a new address for the authenticated user. Useful for adding home, work, or other addresses to the user profile.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - street
+                - city
+                - state
+                - postal_code
+                - country
+              properties:
+                street:
+                  type: string
+                  description: Street address.
+                city:
+                  type: string
+                  description: City name.
+                state:
+                  type: string
+                  description: State or province.
+                postal_code:
+                  type: string
+                  description: Postal or ZIP code.
+                country:
+                  type: string
+                  description: Country name.
+      responses:
+        '201':
+          description: Address created successfully.
+        '400':
+          description: Invalid input. One or more fields are missing or invalid.
+        '401':
+          description: Unauthorized. Missing or invalid JWT token.
+  /api/v1/address/{id}:
+    put:
+      tags:
+        - User
+      summary: Update address
+      description: |
+        Updates an existing address for the authenticated user. Only provided fields will be updated. Useful for keeping address information current.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                street:
+                  type: string
+                  description: New street address.
+                city:
+                  type: string
+                  description: New city name.
+                state:
+                  type: string
+                  description: New state or province.
+                postal_code:
+                  type: string
+                  description: New postal or ZIP code.
+                country:
+                  type: string
+                  description: New country name.
+      responses:
+        '200':
+          description: Address updated successfully.
+        '400':
+          description: Invalid input. One or more fields are invalid.
+        '401':
+          description: Unauthorized. Missing or invalid JWT token.
+  /api/v1/users/family:
+    get:
+      tags:
+        - User
+      summary: Get family members
+      description: |
+        Returns a list of family members associated with the authenticated user. 
+        Useful for collaborative budgeting and shared financial management.
+      responses:
+        '200':
+          description: Family members returned successfully.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      description: Family member's unique identifier.
+                    email:
+                      type: string
+                      description: Family member's email address.
+                    first_name:
+                      type: string
+                      description: Family member's first name.
+                    last_name:
+                      type: string
+                      description: Family member's last name.
+                    address:
+                      type: object
+                      description: Family member's address information.
+                      properties:
+                        street:
+                          type: string
+                          description: Street address.
+                        city:
+                          type: string
+                          description: City name.
+                        state:
+                          type: string
+                          description: State or province.
+                        postal_code:
+                          type: string
+                          description: Postal or ZIP code.
+                        country:
+                          type: string
+                          description: Country name.
+        '401':
+          description: Unauthorized. Missing or invalid JWT token.
+  /api/v1/budgets:
+    get:
+      tags:
+        - Budget
+      summary: Get budgets
+      description: |
+        Returns a list of budgets created by the authenticated user. 
+        Each budget includes details such as name, amount, spent, category, and period. 
+        Useful for tracking and managing personal or family finances.
+      responses:
+        '200':
+          description: List of budgets returned successfully.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      description: Budget's unique identifier.
+                    name:
+                      type: string
+                      description: Name of the budget.
+                    amount:
+                      type: number
+                      description: Total budgeted amount.
+                    spent:
+                      type: number
+                      description: Amount spent so far.
+                    category:
+                      type: string
+                      description: Budget category (e.g., groceries, rent).
+                    period:
+                      type: string
+                      description: Budget period (e.g., monthly, yearly).
+        '401':
+          description: Unauthorized. Missing or invalid JWT token.
+    post:
+      tags:
+        - Budget
+      summary: Create budget
+      description: |
+        Creates a new budget for the authenticated user. 
+        Specify the name, amount, category, and period. 
+        Useful for planning and controlling expenses.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - amount
+                - category
+                - period
+              properties:
+                name:
+                  type: string
+                  description: Name of the budget.
+                amount:
+                  type: number
+                  description: Total budgeted amount.
+                category:
+                  type: string
+                  description: Budget category.
+                period:
+                  type: string
+                  description: Budget period.
+      responses:
+        '201':
+          description: Budget created successfully.
+        '400':
+          description: Invalid input. One or more fields are missing or invalid.
+        '401':
+          description: Unauthorized. Missing or invalid JWT token.
+  /api/v1/budgets/{id}:
+    put:
+      tags:
+        - Budget
+      summary: Update budget
+      description: |
+        Updates an existing budget for the authenticated user. 
+        Only provided fields will be updated. Useful for adjusting plans as expenses change.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: New name for the budget.
+                amount:
+                  type: number
+                  description: New total budgeted amount.
+                category:
+                  type: string
+                  description: New category.
+                period:
+                  type: string
+                  description: New period.
+      responses:
+        '200':
+          description: Budget updated successfully.
+        '400':
+          description: Invalid input. One or more fields are invalid.
+        '401':
+          description: Unauthorized. Missing or invalid JWT token.
+    delete:
+      tags:
+        - Budget
+      summary: Delete budget
+      description: |
+        Deletes a budget for the authenticated user. 
+        This action is irreversible. Useful for removing outdated or unnecessary budgets.
+      responses:
+        '204':
+          description: Budget deleted successfully.
+        '401':
+          description: Unauthorized. Missing or invalid JWT token.
+  /api/v1/transactions:
+    get:
+      tags:
+        - Transaction
+      summary: Get transactions
+      description: |
+        Returns a list of transactions for the authenticated user. 
+        Each transaction includes details such as amount, description, category, merchant, and date. 
+        Useful for tracking spending and analyzing financial activity.
+      responses:
+        '200':
+          description: List of transactions returned successfully.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      description: Transaction's unique identifier.
+                    amount:
+                      type: number
+                      description: Transaction amount.
+                    description:
+                      type: string
+                      description: Description of the transaction.
+                    category:
+                      type: string
+                      description: Transaction category (e.g., groceries, rent).
+                    merchant:
+                      type: string
+                      description: Merchant or vendor name.
+                    transaction_date:
+                      type: string
+                      format: date-time
+                      description: Date and time of the transaction.
+        '401':
+          description: Unauthorized. Missing or invalid JWT token.
+    post:
+      tags:
+        - Transaction
+      summary: Create transaction
+      description: |
+        Creates a new transaction for the authenticated user. 
+        Specify the amount, description, category, merchant, and date. 
+        Useful for recording expenses and income.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - amount
+                - description
+                - category
+                - merchant
+                - transaction_date
+              properties:
+                amount:
+                  type: number
+                  description: Transaction amount.
+                description:
+                  type: string
+                  description: Description of the transaction.
+                category:
+                  type: string
+                  description: Transaction category.
+                merchant:
+                  type: string
+                  description: Merchant or vendor name.
+                transaction_date:
+                  type: string
+                  format: date-time
+                  description: Date and time of the transaction.
+      responses:
+        '201':
+          description: Transaction created successfully.
+        '400':
+          description: Invalid input. One or more fields are missing or invalid.
+        '401':
+          description: Unauthorized. Missing or invalid JWT token.
+  /api/v1/transactions/{id}:
+    put:
+      tags:
+        - Transaction
+      summary: Update transaction
+      description: |
+        Updates an existing transaction for the authenticated user. 
+        Only provided fields will be updated. Useful for correcting mistakes or updating details.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                amount:
+                  type: number
+                  description: New transaction amount.
+                description:
+                  type: string
+                  description: New description.
+                category:
+                  type: string
+                  description: New category.
+                merchant:
+                  type: string
+                  description: New merchant name.
+                transaction_date:
+                  type: string
+                  format: date-time
+                  description: New date and time.
+      responses:
+        '200':
+          description: Transaction updated successfully.
+        '400':
+          description: Invalid input. One or more fields are invalid.
+        '401':
+          description: Unauthorized. Missing or invalid JWT token.
+    delete:
+      tags:
+        - Transaction
+      summary: Delete transaction
+      description: |
+        Deletes a transaction for the authenticated user. 
+        This action is irreversible. Useful for removing incorrect or duplicate transactions.
+      responses:
+        '204':
+          description: Transaction deleted successfully.
+        '401':
+          description: Unauthorized. Missing or invalid JWT token.
+  /api/v1/receipts/upload:
+    post:
+      tags:
+        - Receipt
+      summary: Upload receipt
+      description: |
+        Uploads a receipt image for processing and storage. 
+        The image is processed using AI to extract relevant data. 
+        Useful for expense tracking and record keeping.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - image
+              properties:
+                image:
+                  type: string
+                  format: binary
+                  description: Receipt image file (JPG, PNG, etc.).
+      responses:
+        '201':
+          description: Receipt uploaded and processed successfully.
+        '400':
+          description: Invalid input. File missing or invalid format.
+        '401':
+          description: Unauthorized. Missing or invalid JWT token.
+  /api/v1/receipts:
+    get:
+      tags:
+        - Receipt
+      summary: Get receipts
+      description: |
+        Returns a list of receipts for the authenticated user. 
+        Each receipt includes merchant, total, tax, transaction ID, and image URLs. 
+        Useful for tracking purchases and verifying expenses.
+      responses:
+        '200':
+          description: List of receipts returned successfully.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      description: Receipt's unique identifier.
+                    merchant:
+                      type: string
+                      description: Merchant name.
+                    total:
+                      type: number
+                      description: Total amount on the receipt.
+                    tax:
+                      type: number
+                      description: Tax amount.
+                    transaction_id:
+                      type: string
+                      description: Associated transaction ID.
+                    original_image_url:
+                      type: string
+                      description: URL to original receipt image.
+                    processed_image_url:
+                      type: string
+                      description: URL to processed receipt image.
+        '401':
+          description: Unauthorized. Missing or invalid JWT token.
+  /api/v1/receipts/{id}:
+    get:
+      tags:
+        - Receipt
+      summary: Get receipt by ID
+      description: |
+        Returns details of a specific receipt for the authenticated user. 
+        Includes merchant, total, tax, transaction ID, and image URLs. 
+        Useful for viewing individual purchase records and verifying expenses.
+      responses:
+        '200':
+          description: Receipt details returned successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: Receipt's unique identifier.
+                  merchant:
+                    type: string
+                    description: Merchant name.
+                  total:
+                    type: number
+                    description: Total amount on the receipt.
+                  tax:
+                    type: number
+                    description: Tax amount.
+                  transaction_id:
+                    type: string
+                    description: Associated transaction ID.
+                  original_image_url:
+                    type: string
+                    description: URL to original receipt image.
+                  processed_image_url:
+                    type: string
+                    description: URL to processed receipt image.
+        '401':
+          description: Unauthorized. Missing or invalid JWT token.
