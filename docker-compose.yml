@@ -1,0 +1,53 @@
+version: '3.8'
+
+networks:
+  kinance-net:
+
+services:
+  kinance_db:
+    container_name: kinance_db
+    image: postgres:15
+    environment:
+      POSTGRES_DB: finfam
+      POSTGRES_USER: finfam
+      POSTGRES_PASSWORD: finfam123
+    ports:
+      - "5434:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - kinance-net
+
+  kinance_redis:
+    container_name: kinance_redis
+    image: redis:7-alpine
+    ports:
+      - "6399:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - kinance-net
+
+  kinance_api:
+    container_name: kinance_api
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    depends_on:
+      - kinance_db
+      - kinance_redis
+    environment:
+      DB_HOST: kinance_db
+      DB_USER: finfam
+      DB_PASSWORD: finfam123
+      DB_NAME: finfam
+      REDIS_HOST: kinance_redis
+      JWT_SECRET: your-super-secret-jwt-key
+    networks:
+      - kinance-net
+
+volumes:
+  postgres_data:
+  redis_data:
