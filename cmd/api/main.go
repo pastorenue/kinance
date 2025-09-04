@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	redoc "github.com/mvrilo/go-redoc"
 	"github.com/pastorenue/kinance/internal/auth"
 	"github.com/pastorenue/kinance/internal/budget"
 	"github.com/pastorenue/kinance/internal/receipt"
@@ -34,13 +35,12 @@ func main() {
 	if err != nil {
 		log.Fatal("Failed to connect to database:", err)
 	}
-		// GORM v2 does not require db.Close()
 
 	// Initialize services
 	userService := user.NewService(db, logger)
 	authService := auth.NewService(db, cfg.JWT, logger)
 	budgetService := budget.NewService(db, logger)
-		transactionService := transaction.NewService(db)
+	transactionService := transaction.NewService(db)
 	receiptService := receipt.NewService(db, cfg.AI, logger)
 
 	// Initialize router
@@ -53,7 +53,7 @@ func main() {
 	}
 
 	go func() {
-		logger.Info("Starting server on port", cfg.Server.Port)
+		logger.Info(fmt.Sprintf("Starting server on port %d", cfg.Server.Port))
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			logger.Fatal("Server failed to start:", err)
 		}
@@ -81,15 +81,26 @@ func setupRouter(cfg *config.Config, authSvc *auth.Service, userSvc *user.Servic
 	router := gin.New()
 
 	// Global middleware
-		// router.Use(middleware.Logger())
-		// router.Use(middleware.Recovery())
-		// router.Use(middleware.CORS())
-		// router.Use(middleware.RateLimit())
+	// router.Use(middleware.Logger())
+	// router.Use(middleware.Recovery())
+	// router.Use(middleware.CORS())
+	// router.Use(middleware.RateLimit())
 
 	// Health check
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{"status": "ok", "timestamp": time.Now()})
 	})
+
+	// Serve OpenAPI spec file
+	router.StaticFile("/openapi.yaml", "api/docs/openapi.yaml")
+
+	// Serve Redoc UI
+	redocHandler := redoc.Redoc{
+		Title:    "Kinance API Docs",
+		SpecFile: "api/docs/openapi.yaml",
+		SpecPath: "/openapi.yaml",
+	}
+	router.GET("/docs", gin.WrapH(redocHandler.Handler()))
 
 	// API v1 routes
 	v1 := router.Group("/api/v1")
@@ -111,6 +122,8 @@ func setupRouter(cfg *config.Config, authSvc *auth.Service, userSvc *user.Servic
 			protected.GET("/users/profile", userHandler.GetProfile)
 			protected.PUT("/users/profile", userHandler.UpdateProfile)
 			protected.GET("/users/family", userHandler.GetFamilyMembers)
+			protected.POST("/users/address", userHandler.CreateAddress)
+			protected.PUT("/users/address", userHandler.UpdateAddress)
 
 			// Budget routes
 			budgetHandler := budget.NewHandler(budgetSvc)
