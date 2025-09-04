@@ -6,6 +6,8 @@ require (
 	github.com/gin-gonic/gin v1.9.1
 	github.com/golang-jwt/jwt/v4 v4.5.0
 	github.com/google/uuid v1.3.0
+	github.com/joho/godotenv v1.5.1
+	github.com/mvrilo/go-redoc v0.1.5
 	github.com/sirupsen/logrus v1.9.3
 	golang.org/x/crypto v0.13.0
 	gorm.io/driver/postgres v1.5.2

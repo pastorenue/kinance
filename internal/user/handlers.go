@@ -88,3 +88,57 @@ func (h *Handler) GetFamilyMembers(c *gin.Context) {
 		Data:    members,
 	})
 }
+
+func (h *Handler) CreateAddress(c *gin.Context) {
+	userID, _ := c.Get(middleware.UserIDKey)
+
+	var req CreateAddressRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, common.APIResponse{
+			Success: false,
+			Error:   err.Error(),
+		})
+		return
+	}
+
+	address, err := h.service.CreateAddress(c.Request.Context(), userID.(uuid.UUID), &req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, common.APIResponse{
+			Success: false,
+			Error:   err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, common.APIResponse{
+		Success: true,
+		Data:    address,
+	})
+}
+
+func (h *Handler) UpdateAddress(c *gin.Context) {
+    userID, _ := c.Get(middleware.UserIDKey)
+
+    var req UpdateAddressRequest
+    if err := c.ShouldBindJSON(&req); err != nil {
+        c.JSON(http.StatusBadRequest, common.APIResponse{
+            Success: false,
+            Error:   err.Error(),
+        })
+        return
+    }
+
+    address, err := h.service.UpdateAddress(c.Request.Context(), userID.(uuid.UUID), &req)
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, common.APIResponse{
+            Success: false,
+            Error:   err.Error(),
+        })
+        return
+    }
+
+    c.JSON(http.StatusOK, common.APIResponse{
+        Success: true,
+        Data:    address,
+    })
+}

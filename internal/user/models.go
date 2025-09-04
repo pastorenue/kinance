@@ -7,6 +7,15 @@ import (
 	"github.com/pastorenue/kinance/internal/common"
 )
 
+type Address struct {
+	common.BaseModel
+	Country     string `json:"country" gorm:"type:varchar(100)"`
+	City        string `json:"city" gorm:"type:varchar(100)"`
+	PostalCode  string `json:"postal_code" gorm:"type:varchar(20)"`
+	Street      string `json:"street" gorm:"type:varchar(100)"`
+	HouseNumber int    `json:"house_number" gorm:"type:int"`
+}
+
 type User struct {
 	common.BaseModel
 	Email          string     `json:"email" gorm:"uniqueIndex;not null"`
@@ -20,6 +29,7 @@ type User struct {
 	FamilyID       *uuid.UUID `json:"family_id"`
 	Family         *Family    `json:"family,omitempty"`
 	Role           UserRole   `json:"role" gorm:"default:member"`
+	Address        []Address  `json:"address" gorm:"type:jsonb"`
 }
 
 type Family struct {
@@ -52,4 +62,21 @@ type UpdateUserRequest struct {
 	LastName    string `json:"last_name"`
 	Phone       string `json:"phone"`
 	DateOfBirth string `json:"date_of_birth"`
+}
+
+type CreateAddressRequest struct {
+	Country     string `json:"country" binding:"required"`
+	City        string `json:"city" binding:"required"`
+	PostalCode  string `json:"postal_code" binding:"required"`
+	Street      string `json:"street" binding:"required"`
+	HouseNumber int    `json:"house_number" binding:"required"`
+}
+
+type UpdateAddressRequest struct {
+	ID          uuid.UUID `json:"id" binding:"required"`
+	Country     string    `json:"country"`
+	City        string    `json:"city"`
+	PostalCode  string    `json:"postal_code"`
+	Street      string    `json:"street"`
+	HouseNumber int       `json:"house_number"`
 }

@@ -122,3 +122,70 @@ func (s *Service) GetFamilyMembers(ctx context.Context, userID uuid.UUID) ([]Use
     
     return members, nil
 }
+
+func (s *Service) CreateAddress(ctx context.Context, userID uuid.UUID, req *CreateAddressRequest) (*User, error) {
+    var user User
+    if err := s.db.WithContext(ctx).First(&user, "id = ?", userID).Error; err != nil {
+        return nil, err
+    }
+
+    address := Address{
+        Country:     req.Country,
+        City:        req.City,
+        PostalCode:  req.PostalCode,
+        Street:      req.Street,
+        HouseNumber: req.HouseNumber,
+    }
+
+    user.Address = append(user.Address, address)
+
+    if err := s.db.WithContext(ctx).Save(&user).Error; err != nil {
+        return nil, err
+    }
+
+    return &user, nil
+}
+
+func (s *Service) UpdateAddress(ctx context.Context, userID uuid.UUID, req *UpdateAddressRequest) (*User, error) {
+    var user User
+    if err := s.db.WithContext(ctx).First(&user, "id = ?", userID).Error; err != nil {
+        return nil, err
+    }
+
+    if len(user.Address) == 0 {
+        return nil, errors.New("no address to update")
+    }
+    // Find the address to update via the address id
+    var address *Address
+    for i := range user.Address {
+        if user.Address[i].ID == req.ID {
+            address = &user.Address[i]
+            break
+        }
+    }
+    if address == nil {
+        return nil, errors.New("address not found")
+    }
+
+    if req.Country != "" {
+        address.Country = req.Country
+    }
+    if req.City != "" {
+        address.City = req.City
+    }
+    if req.PostalCode != "" {
+        address.PostalCode = req.PostalCode
+    }
+    if req.Street != "" {
+        address.Street = req.Street
+    }
+    if req.HouseNumber != 0 {
+        address.HouseNumber = req.HouseNumber
+    }
+
+    if err := s.db.WithContext(ctx).Save(&user).Error; err != nil {
+        return nil, err
+    }
+
+    return &user, nil
+}

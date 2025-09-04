@@ -10,9 +10,9 @@ import (
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 
+	"github.com/pastorenue/kinance/internal/common"
 	"github.com/pastorenue/kinance/internal/user"
 	"github.com/pastorenue/kinance/pkg/config"
-	"github.com/pastorenue/kinance/internal/common"
 )
 
 type Service struct {
