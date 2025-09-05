@@ -7,6 +7,13 @@ import (
 	"github.com/pastorenue/kinance/internal/common"
 )
 
+type Group struct {
+	common.BaseModel
+	Name        string `json:"name" gorm:"not null"`
+	Description string `json:"description"`
+	// Add other fields as needed
+}
+
 type Address struct {
 	common.BaseModel
 	Country     string `json:"country" gorm:"type:varchar(100)"`
@@ -30,6 +37,12 @@ type User struct {
 	Family         *Family    `json:"family,omitempty"`
 	Role           UserRole   `json:"role" gorm:"default:member"`
 	Address        []Address  `json:"address" gorm:"type:jsonb"`
+	Groups        []Group    `json:"groups" gorm:"many2many:user_groups;"`
+
+	// For Super Admins Only
+	IsSuperAdmin bool `json:"is_super_admin" gorm:"default:false"`
+	IsStaff      bool `json:"is_staff" gorm:"default:false"`
+
 }
 
 type Family struct {
