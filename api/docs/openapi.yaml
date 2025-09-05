@@ -213,10 +213,14 @@ paths:
               type: object
               required:
                 - refresh_token
+                - user_id
               properties:
                 refresh_token:
                   type: string
                   description: Valid JWT refresh token.
+                user_id:
+                  type: string
+                  description: User's unique identifier.
       responses:
         '200':
           description: Token refreshed. Returns a new JWT access token.

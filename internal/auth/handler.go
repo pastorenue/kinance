@@ -13,9 +13,10 @@ type Handler struct {
 	userService *user.Service
 }
 
-func NewHandler(authService *Service) *Handler {
+func NewHandler(authService *Service, userService *user.Service) *Handler {
 	return &Handler{
 		authService: authService,
+		userService: userService,
 	}
 }
 
@@ -37,11 +38,23 @@ func (h *Handler) Register(c *gin.Context) {
 		})
 		return
 	}
+	token, err := h.authService.generateAccessToken(user)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, common.APIResponse{
+			Success: false,
+			Error:   err.Error(),
+		})
+		return
+	}
 
+	result := map[string]interface{}{
+		"token": token,
+		"user":  user,
+	}
 	c.JSON(http.StatusCreated, common.APIResponse{
 		Success: true,
 		Message: "User registered successfully",
-		Data:    user,
+		Data:    result,
 	})
 }
 
@@ -71,9 +84,57 @@ func (h *Handler) Login(c *gin.Context) {
 }
 
 func (h *Handler) RefreshToken(c *gin.Context) {
-	// Implementation for refresh token logic
-	c.JSON(http.StatusNotImplemented, common.APIResponse{
-		Success: false,
-		Message: "Refresh token not implemented yet",
+	var req RefreshTokenRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, common.APIResponse{
+			Success: false,
+			Error:   err.Error(),
+		})
+		return
+	}
+	user, err := h.userService.GetUserByID(c.Request.Context(), req.UserID)
+	if err != nil {
+		c.JSON(http.StatusNotFound, common.APIResponse{
+			Success: false,
+			Error:   "User not found",
+		})
+		return
+	}
+
+	_, err = h.authService.ValidateToken(req.RefreshToken)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, common.APIResponse{
+			Success: false,
+			Error:   "Invalid or expired refresh token",
+		})
+		return
+	}
+
+	accessToken, err := h.authService.generateAccessToken(user)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, common.APIResponse{
+			Success: false,
+			Error:   "Failed to generate access token",
+		})
+		return
+	}
+
+	newRefreshToken, err := h.authService.generateRefreshToken(user)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, common.APIResponse{
+			Success: false,
+			Error:   "Failed to generate refresh token",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, common.APIResponse{
+		Success: true,
+		Message: "Token refreshed successfully",
+		Data: map[string]interface{}{
+			"token":         accessToken,
+			"refresh_token": newRefreshToken,
+			"user":          user,
+		},
 	})
 }

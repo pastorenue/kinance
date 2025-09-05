@@ -7,9 +7,9 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 
-	"github.com/pastorenue/kinance/internal/budget"
-	"github.com/pastorenue/kinance/internal/receipt"
-	"github.com/pastorenue/kinance/internal/transaction"
+	// "github.com/pastorenue/kinance/internal/budget"
+	// "github.com/pastorenue/kinance/internal/receipt"
+	// "github.com/pastorenue/kinance/internal/transaction"
 	"github.com/pastorenue/kinance/internal/user"
 	"github.com/pastorenue/kinance/pkg/config"
 )
@@ -28,12 +28,12 @@ func NewPostgres(cfg config.DatabaseConfig) (*gorm.DB, error) {
 	// Auto-migrate models
 	err = db.AutoMigrate(
 		&user.User{},
-		&user.Family{},
-		&budget.Budget{},
-		&transaction.Transaction{},
-		&transaction.Tag{},
-		&receipt.Receipt{},
-		&receipt.ReceiptItem{},
+		// &user.Family{},
+		// &budget.Budget{},
+		// &transaction.Transaction{},
+		// &transaction.Tag{},
+		// &receipt.Receipt{},
+		// &receipt.ReceiptItem{},
 	)
 	if err != nil {
 		return nil, err

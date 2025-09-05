@@ -189,3 +189,53 @@ func (s *Service) UpdateAddress(ctx context.Context, userID uuid.UUID, req *Upda
 
     return &user, nil
 }
+
+func (s *Service) ListAllUsers(ctx context.Context) ([]User, error) {
+    var users []User
+    if err := s.db.WithContext(ctx).Find(&users).Error; err != nil {
+        return nil, err
+    }
+    return users, nil
+}
+
+func (s *Service) DeactivateUser(ctx context.Context, userID uuid.UUID) error {
+    return s.db.WithContext(ctx).
+        Model(&User{}).
+        Where("id = ?", userID).
+        Update("is_active", false).
+        Error
+}
+
+func (s *Service) ActivateUser(ctx context.Context, userID uuid.UUID) error {
+    return s.db.WithContext(ctx).
+        Model(&User{}).
+        Where("id = ?", userID).
+        Update("is_active", true).
+        Error
+}
+
+func (s *Service) ForgotPassword(ctx context.Context, email string) error {
+    // Implementation for forgot password logic
+    return nil
+}
+
+func (s *Service) ResetPassword(ctx context.Context, userID uuid.UUID, newPassword string) error {
+    // Implementation for reset password logic
+    return nil
+}
+
+func (s *Service) GetAllActiveUsers(ctx context.Context) ([]User, error) {
+    var users []User
+    if err := s.db.WithContext(ctx).Where("is_active = ?", true).Find(&users).Error; err != nil {
+        return nil, err
+    }
+    return users, nil
+}
+
+func (s *Service) GetAllInactiveUsers(ctx context.Context) ([]User, error) {
+    var users []User
+    if err := s.db.WithContext(ctx).Where("is_active = ?", false).Find(&users).Error; err != nil {
+        return nil, err
+    }
+    return users, nil
+}

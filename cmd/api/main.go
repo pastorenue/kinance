@@ -106,7 +106,7 @@ func setupRouter(cfg *config.Config, authSvc *auth.Service, userSvc *user.Servic
 	v1 := router.Group("/api/v1")
 	{
 		// Auth routes
-		authHandler := auth.NewHandler(authSvc)
+		authHandler := auth.NewHandler(authSvc, userSvc)
 		v1.POST("/auth/register", authHandler.Register)
 		v1.POST("/auth/login", authHandler.Login)
 		v1.POST("/auth/refresh", authHandler.RefreshToken)

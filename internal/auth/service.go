@@ -86,7 +86,7 @@ func (s *Service) generateAccessToken(user *user.User) (string, error) {
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString([]byte(s.jwtConfig.Secret))
+    return token.SignedString([]byte(s.jwtConfig.Secret))
 }
 
 func (s *Service) generateRefreshToken(user *user.User) (string, error) {
@@ -126,4 +126,9 @@ type LoginResponse struct {
 	AccessToken  string     `json:"access_token"`
 	RefreshToken string     `json:"refresh_token"`
 	ExpiresIn    int        `json:"expires_in"`
+}
+
+type RefreshTokenRequest struct {
+    UserID      uuid.UUID `json:"user_id" binding:"required"`
+	RefreshToken string    `json:"refresh_token" binding:"required"`
 }
