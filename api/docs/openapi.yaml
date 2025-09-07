@@ -18,6 +18,10 @@ tags:
     description: Endpoints for managing financial transactions
   - name: Receipt
     description: Endpoints for uploading and retrieving receipts
+  - name: Expense
+    description: Endpoints for managing expenses and categories
+  - name: Category
+    description: Endpoints for managing expense categories
 paths:
   /health:
     get:
@@ -71,90 +75,17 @@ paths:
                   description: User's password. Minimum 8 characters, must include letters and numbers.
                 first_name:
                   type: string
-                  /api/v1/address:
-                    post:
-                      tags:
-                        - User
-                      summary: Create address
-                      description: |
-                        Creates a new address for the authenticated user. Useful for adding home, work, or other addresses to the user profile.
-                      requestBody:
-                        required: true
-                        content:
-                          application/json:
-                            schema:
-                              type: object
-                              required:
-                                - street
-                                - city
-                                - state
-                                - postal_code
-                                - country
-                              properties:
-                                street:
-                                  type: string
-                                  description: Street address.
-                                city:
-                                  type: string
-                                  description: City name.
-                                state:
-                                  type: string
-                                  description: State or province.
-                                postal_code:
-                                  type: string
-                                  description: Postal or ZIP code.
-                                country:
-                                  type: string
-                                  description: Country name.
-                      responses:
-                        '201':
-                          description: Address created successfully.
-                        '400':
-                          description: Invalid input. One or more fields are missing or invalid.
-                        '401':
-                          description: Unauthorized. Missing or invalid JWT token.
-                  /api/v1/address/{id}:
-                    put:
-                      tags:
-                        - User
-                      summary: Update address
-                      description: |
-                        Updates an existing address for the authenticated user. Only provided fields will be updated. Useful for keeping address information current.
-                      requestBody:
-                        required: true
-                        content:
-                          application/json:
-                            schema:
-                              type: object
-                              properties:
-                                street:
-                                  type: string
-                                  description: New street address.
-                                city:
-                                  type: string
-                                  description: New city name.
-                                state:
-                                  type: string
-                                  description: New state or province.
-                                postal_code:
-                                  type: string
-                                  description: New postal or ZIP code.
-                                country:
-                                  type: string
-                                  description: New country name.
-                      responses:
-                        '200':
-                          description: Address updated successfully.
-                        '400':
-                          description: Invalid input. One or more fields are invalid.
-                        '401':
-                          description: Unauthorized. Missing or invalid JWT token.
-                properties:
-                  access_token:
-                    type: string
-                    description: New JWT access token.
-        '401':
-          description: Invalid refresh token. Token may be expired or malformed.
+                  description: User's first name.
+                last_name:
+                  type: string
+                  description: User's last name.
+      responses:
+        '201':
+          description: User registered successfully. Returns the newly created user ID.
+        '400':
+          description: Invalid input. One or more fields are missing or invalid.
+        '409':
+          description: Conflict. Email already registered.
   /api/v1/auth/login:
     post:
       tags:
@@ -600,6 +531,42 @@ paths:
           description: Budget deleted successfully.
         '401':
           description: Unauthorized. Missing or invalid JWT token.
+    get:
+      tags:
+        - Budget
+      summary: Get budget by ID
+      description: |
+        Returns details of a specific budget for the authenticated user. 
+        Includes name, amount, spent, category, and period. 
+        Useful for viewing individual budget information and tracking progress.
+      responses:
+        '200':
+          description: Budget details returned successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: Budget's unique identifier.
+                  name:
+                    type: string
+                    description: Name of the budget.
+                  amount:
+                    type: number
+                    description: Total budgeted amount.
+                  spent:
+                    type: number
+                    description: Amount spent so far.
+                  category:
+                    type: string
+                    description: Budget category (e.g., groceries, rent).
+                  period:
+                    type: string
+                    description: Budget period (e.g., monthly, yearly).
+        '401':
+          description: Unauthorized. Missing or invalid JWT token.
   /api/v1/transactions:
     get:
       tags:
@@ -845,3 +812,336 @@ paths:
                     description: URL to processed receipt image.
         '401':
           description: Unauthorized. Missing or invalid JWT token.
+  /api/v1/expenses:
+    post:
+      tags:
+        - Expense
+      summary: Create expense
+      description: |
+        Creates a new expense for the authenticated user. 
+        Specify the amount, description, category, merchant, and date. 
+        Useful for recording and tracking expenses.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - amount
+                - description
+                - category
+                - payment_method
+              properties:
+                amount:
+                  type: number
+                  description: Expense amount.
+                description:  
+                  type: string
+                  description: Description of the expense.
+                category:
+                  type: string
+                  description: Expense category.
+                payment_method:
+                  type: string
+                  description: Payment method used for the expense.
+                recurring_id:
+                  type: string
+                  format: uuid
+                  description: Unique identifier for recurring expenses.
+                receipt_url:
+                  type: string
+                  description: URL to the receipt image.
+      responses:
+        '201':
+          description: Expense created successfully.
+        '400':
+          description: Invalid input. One or more fields are missing or invalid.
+        '401':
+          description: Unauthorized. Missing or invalid JWT token.
+    get:
+      tags:
+        - Expense
+      summary: Get all expenses
+      description: |
+        Returns a list of all expenses for the authenticated user.
+      responses:
+        '200':
+          description: List of expenses returned successfully.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Expense'
+        '401':
+          description: Unauthorized. Missing or invalid JWT token.
+  /api/v1/expenses/{id}:
+    get:
+      tags:
+        - Expense
+      summary: Get expense by ID
+      description: |
+        Returns a specific expense by its ID for the authenticated user.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Expense ID
+      responses:
+        '200':
+          description: Expense returned successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Expense'
+        '404':
+          description: Expense not found.
+        '401':
+          description: Unauthorized. Missing or invalid JWT token.
+    put:
+      tags:
+        - Expense
+      summary: Update expense
+      description: |
+        Updates an existing expense for the authenticated user.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Expense ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateExpenseRequest'
+      responses:
+        '200':
+          description: Expense updated successfully.
+        '400':
+          description: Invalid input.
+        '404':
+          description: Expense not found.
+        '401':
+          description: Unauthorized. Missing or invalid JWT token.
+    delete:
+      tags:
+        - Expense
+      summary: Delete expense
+      description: |
+        Deletes an expense for the authenticated user.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Expense ID
+      responses:
+        '204':
+          description: Expense deleted successfully.
+        '404':
+          description: Expense not found.
+        '401':
+          description: Unauthorized. Missing or invalid JWT token.
+  /api/v1/expenses/category/{category_id}:
+    get:
+      tags:
+        - Expense
+      summary: Get expenses by category
+      description: |
+        Returns a list of expenses for the authenticated user filtered by category.
+      parameters:
+        - name: category_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Category ID
+      responses:
+        '200':
+          description: List of expenses returned successfully.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Expense'
+        '401':
+          description: Unauthorized. Missing or invalid JWT token.
+  /api/v1/categories:
+    post:
+      tags:
+        - Category
+      summary: Create category
+      description: |
+        Creates a new expense category for the authenticated user. 
+        Specify the name and description. 
+        Useful for organizing and classifying expenses.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+                  description: Name of the category.
+                description:
+                  type: string
+                  description: Description of the category.
+      responses:
+        '201':
+          description: Category created successfully.
+        '400':
+          description: Invalid input. One or more fields are missing or invalid.
+        '401':
+          description: Unauthorized. Missing or invalid JWT token.
+    get:
+      tags:
+        - Category
+      summary: Get all categories
+      description: |
+        Returns a list of all categories for the authenticated user.
+      responses:
+        '200':
+          description: List of categories returned successfully.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Category'
+        '401':
+          description: Unauthorized. Missing or invalid JWT token.
+  /api/v1/categories/{id}:
+    get:
+      tags:
+        - Category
+      summary: Get category by ID
+      description: |
+        Returns a specific category by its ID for the authenticated user.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Category ID
+      responses:
+        '200':
+          description: Category returned successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+        '404':
+          description: Category not found.
+        '401':
+          description: Unauthorized. Missing or invalid JWT token.
+    put:
+      tags:
+        - Category
+      summary: Update category
+      description: |
+        Updates an existing category for the authenticated user.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Category ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCategoryRequest'
+      responses:
+        '200':
+          description: Category updated successfully.
+        '400':
+          description: Invalid input.
+        '404':
+          description: Category not found.
+        '401':
+          description: Unauthorized. Missing or invalid JWT token.
+    delete:
+      tags:
+        - Category
+      summary: Delete category
+      description: |
+        Deletes a category for the authenticated user.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Category ID
+      responses:
+        '204':
+          description: Category deleted successfully.
+        '404':
+          description: Category not found.
+        '401':
+          description: Unauthorized. Missing or invalid JWT token.
+components:
+  schemas:
+    Expense:
+      type: object
+      properties:
+        id:
+          type: string
+        amount:
+          type: number
+        description:
+          type: string
+        category:
+          type: string
+        payment_method:
+          type: string
+        recurring_id:
+          type: string
+        receipt_url:
+          type: string
+    Category:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+    UpdateExpenseRequest:
+      type: object
+      properties:
+        amount:
+          type: number
+        description:
+          type: string
+        category:
+          type: string
+        payment_method:
+          type: string
+        recurring_id:
+          type: string
+        receipt_url:
+          type: string
+    UpdateCategoryRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
