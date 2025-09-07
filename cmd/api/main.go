@@ -182,6 +182,13 @@ func setupRouter(
 			protected.PUT("/expenses/:id", expHandler.UpdateExpense)
 			protected.DELETE("/expenses/:id", expHandler.DeleteExpense)
 			protected.GET("/expenses/category/:id", expHandler.GetExpensesByCategoryID)
+
+			// Recurring Expense routes
+			protected.POST("/expenses/recurring", expHandler.CreateRecurringExpense)
+			protected.GET("/expenses/recurring", expHandler.GetRecurringExpenses)
+			protected.GET("/expenses/recurring/:id", expHandler.GetRecurringExpenseByID)
+			protected.PUT("/expenses/recurring/:id", expHandler.UpdateRecurringExpense)
+			protected.DELETE("/expenses/recurring/:id", expHandler.DeleteRecurringExpense)
 		}
 	}
 

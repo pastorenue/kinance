@@ -45,7 +45,7 @@ type RecurringExpense struct {
 	Category      Category        `json:"category"`
 	UserID        uuid.UUID      `gorm:"not null" json:"user_id"`
 	Frequency     RecurringFrequency `gorm:"type:recurring_frequency;not null" json:"frequency"`
-	PaymentMethod PaymentMethod   `gorm:"type:payment_method;not null" json:"payment_method"`
+	PaymentMethod PaymentMethod   `gorm:"type:payment_method" json:"payment_method"`
 	IsActive	  bool            `gorm:"default:true" json:"is_active"`
 	Expenses      []Expense       `gorm:"foreignKey:RecurringExpenseID" json:"expenses"`
 	StartDate     time.Time       `gorm:"not null" json:"start_date"`
@@ -59,11 +59,12 @@ type Expense struct {
 	Amount      decimal.Decimal `gorm:"type:decimal(10,2);not null" json:"amount" binding:"required"`
 	Description string            `json:"description" binding:"required"`
 	CategoryID  uuid.UUID      `gorm:"not null" json:"category_id" binding:"required"`
+	Category    Category        `gorm:"foreignKey:CategoryID" json:"category"`
 	UserID      uuid.UUID      `gorm:"not null" json:"user_id" binding:"required"`
 	RecurringExpenseID *uuid.UUID        `gorm:"index" json:"recurring_expense_id,omitempty"`
 	RecurringExpense   *RecurringExpense `gorm:"foreignKey:RecurringExpenseID" json:"recurring_expense,omitempty"`
 	ReceiptURL  string            `json:"receipt_url,omitempty"`
-	PaymentMethod PaymentMethod   `gorm:"type:payment_method;not null" json:"payment_method"`
+	PaymentMethod PaymentMethod   `gorm:"type:payment_method" json:"payment_method"`
 }
 
 // Request payloads

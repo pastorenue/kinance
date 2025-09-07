@@ -7,12 +7,6 @@ import (
 	"github.com/pastorenue/kinance/pkg/middleware"
 )
 
-type Logger interface {
-	Info(msg string, fields ...interface{})
-	Error(msg string, fields ...interface{})
-	Debug(msg string, fields ...interface{})
-}
-
 // getUserAndCategoryID extracts userID and categoryID from context and returns them, or writes an error response and returns false.
 func getUserAndCategoryID(c *gin.Context) (uuid.UUID, uuid.UUID, bool) {
 	userIDVal, _ := c.Get(middleware.UserIDKey)

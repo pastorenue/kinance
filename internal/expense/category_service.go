@@ -5,16 +5,17 @@ import (
 	"errors"
 
 	"github.com/google/uuid"
+	"github.com/pastorenue/kinance/internal/common"
 	"github.com/shopspring/decimal"
 	"gorm.io/gorm"
 )
 
 type CategoryService struct {
 	db     *gorm.DB
-	logger Logger
+	logger common.Logger
 }
 
-func NewCategoryService(db *gorm.DB, logger Logger) *CategoryService {
+func NewCategoryService(db *gorm.DB, logger common.Logger) *CategoryService {
 	return &CategoryService{db: db, logger: logger}
 }
 

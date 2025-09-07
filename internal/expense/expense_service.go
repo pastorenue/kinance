@@ -12,10 +12,10 @@ import (
 
 type ExpenseService struct {
 	db     *gorm.DB
-	logger Logger
+	logger common.Logger
 }
 
-func NewExpenseService(db *gorm.DB, logger Logger) *ExpenseService {
+func NewExpenseService(db *gorm.DB, logger common.Logger) *ExpenseService {
 	return &ExpenseService{db: db, logger: logger}
 }
 
@@ -39,6 +39,12 @@ func (s *ExpenseService) CreateExpense(ctx context.Context, userID uuid.UUID, re
 	if err := s.db.WithContext(ctx).Create(expense).Error; err != nil {
 		return nil, err
 	}
+
+	// Load the category relationship
+	if err := s.db.WithContext(ctx).Preload("Category").First(expense, expense.ID).Error; err != nil {
+		return nil, err
+	}
+
 	return expense, nil
 }
 
@@ -73,6 +79,12 @@ func (s *ExpenseService) UpdateExpense(ctx context.Context, userID uuid.UUID, ex
 	if err := s.db.WithContext(ctx).Save(&expense).Error; err != nil {
 		return nil, err
 	}
+
+	// Load the category relationship
+	if err := s.db.WithContext(ctx).Preload("Category").First(&expense, expense.ID).Error; err != nil {
+		return nil, err
+	}
+
 	return &expense, nil
 }
 
@@ -85,20 +97,10 @@ func (s *ExpenseService) DeleteExpense(ctx context.Context, userID uuid.UUID, ex
 
 func (s *ExpenseService) GetExpenses(ctx context.Context, userID uuid.UUID, pagination *common.PaginationParams) ([]Expense, error) {
 	var expenses []Expense
-	query := s.db.WithContext(ctx).Where("user_id = ?", userID)
-
-	if err := query.Model(&Expense{}).Preload("Category").Error; err != nil {
-		return nil, err
-	}
 
 	offset := (pagination.Page - 1) * pagination.PageSize
-	if err := query.Offset(offset).Limit(pagination.PageSize).Find(&expenses).Error; err != nil {
+	if err := s.db.WithContext(ctx).Where("user_id = ?", userID).Preload("Category").Offset(offset).Limit(pagination.PageSize).Find(&expenses).Error; err != nil {
 		return nil, err
-	}
-
-	total_pages := int64(len(expenses)) / int64(pagination.PageSize)
-	if int64(len(expenses))%int64(pagination.PageSize) > 0 {
-		total_pages++
 	}
 
 	return expenses, nil
@@ -167,10 +169,11 @@ func (s *ExpenseService) CreateRecurringExpense(ctx context.Context, userID uuid
 		Description:   req.Description,
 		CategoryID:    req.CategoryID,
 		UserID:        userID,
-		PaymentMethod: req.PaymentMethod,
 		Frequency:     req.Frequency,
+		PaymentMethod: req.PaymentMethod,
 		StartDate:     req.StartDate,
 		EndDate:       req.EndDate,
+		NextDueDate:   req.StartDate, // Initialize with start date
 	}
 
 	recurringExpense.ID = uuid.New()
@@ -290,11 +293,11 @@ func (s *ExpenseService) UpdateRecurringExpense(ctx context.Context, userID uuid
 	if req.CategoryID != nil {
 		recurringExpense.CategoryID = *req.CategoryID
 	}
-	if req.PaymentMethod != nil {
-		recurringExpense.PaymentMethod = *req.PaymentMethod
-	}
 	if req.Frequency != nil {
 		recurringExpense.Frequency = *req.Frequency
+	}
+	if req.PaymentMethod != nil {
+		recurringExpense.PaymentMethod = *req.PaymentMethod
 	}
 	if req.StartDate != nil {
 		recurringExpense.StartDate = *req.StartDate
