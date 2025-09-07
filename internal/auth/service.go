@@ -18,19 +18,13 @@ import (
 type Service struct {
 	db        *gorm.DB
 	jwtConfig config.JWTConfig
-	logger    Logger
+	logger    common.Logger
 	userSvc   *user.Service
-}
-
-type Logger interface {
-	Info(msg string, fields ...interface{})
-	Error(msg string, fields ...interface{})
-	Debug(msg string, fields ...interface{})
 }
 
 // Claims moved to internal/common/claims.go
 
-func NewService(db *gorm.DB, jwtConfig config.JWTConfig, logger Logger) *Service {
+func NewService(db *gorm.DB, jwtConfig config.JWTConfig, logger common.Logger) *Service {
 	return &Service{
 		db:        db,
 		jwtConfig: jwtConfig,
