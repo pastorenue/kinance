@@ -1,4 +1,4 @@
-package budget
+package expense
 
 import (
 	"net/http"
@@ -9,20 +9,19 @@ import (
 	"github.com/pastorenue/kinance/pkg/middleware"
 )
 
-type Handler struct {
-	service *Service
+type ExpenseHandler struct {
+	service *ExpenseService
 }
 
-func NewHandler(service *Service) *Handler {
-	return &Handler{
-		service: service,
-	}
+func NewExpenseHandler(service *ExpenseService) *ExpenseHandler {
+	return &ExpenseHandler{service: service}
 }
 
-func (h *Handler) CreateBudget(c *gin.Context) {
+
+func (h *ExpenseHandler) CreateExpense(c *gin.Context) {
 	userID, _ := c.Get(middleware.UserIDKey)
 
-	var req CreateBudgetRequest
+	var req CreateExpenseRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, common.APIResponse{
 			Success: false,
@@ -31,7 +30,7 @@ func (h *Handler) CreateBudget(c *gin.Context) {
 		return
 	}
 
-	budget, err := h.service.CreateBudget(c.Request.Context(), userID.(uuid.UUID), &req)
+	expense, err := h.service.CreateExpense(c.Request.Context(), userID.(uuid.UUID), &req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, common.APIResponse{
 			Success: false,
@@ -42,11 +41,11 @@ func (h *Handler) CreateBudget(c *gin.Context) {
 
 	c.JSON(http.StatusCreated, common.APIResponse{
 		Success: true,
-		Data:    budget,
+		Data:    expense,
 	})
 }
 
-func (h *Handler) GetBudgets(c *gin.Context) {
+func (h *ExpenseHandler) GetExpenses(c *gin.Context) {
 	userID, _ := c.Get(middleware.UserIDKey)
 
 	var pagination common.PaginationParams
@@ -54,7 +53,7 @@ func (h *Handler) GetBudgets(c *gin.Context) {
 		pagination = common.PaginationParams{Page: 1, PageSize: 20}
 	}
 
-	result, err := h.service.GetBudgets(c.Request.Context(), userID.(uuid.UUID), &pagination)
+	result, err := h.service.GetExpenses(c.Request.Context(), userID.(uuid.UUID), &pagination)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, common.APIResponse{
 			Success: false,
@@ -69,18 +68,13 @@ func (h *Handler) GetBudgets(c *gin.Context) {
 	})
 }
 
-func (h *Handler) GetBudget(c *gin.Context) {
-	userID, _ := c.Get(middleware.UserIDKey)
-	budgetID, err := uuid.Parse(c.Param("id"))
-	if err != nil {
-		c.JSON(http.StatusBadRequest, common.APIResponse{
-			Success: false,
-			Error:   "Invalid budget ID",
-		})
+func (h *ExpenseHandler) GetExpenseByID(c *gin.Context) {
+	userID, expenseID, ok := getUserAndExpenseID(c)
+	if !ok {
 		return
 	}
 
-	budget, err := h.service.GetBudget(c.Request.Context(), userID.(uuid.UUID), budgetID)
+	expense, err := h.service.GetExpenseByID(c.Request.Context(), userID, expenseID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, common.APIResponse{
 			Success: false,
@@ -91,22 +85,38 @@ func (h *Handler) GetBudget(c *gin.Context) {
 
 	c.JSON(http.StatusOK, common.APIResponse{
 		Success: true,
-		Data:    budget,
+		Data:    expense,
 	})
 }
 
-func (h *Handler) UpdateBudget(c *gin.Context) {
-	userID, _ := c.Get(middleware.UserIDKey)
-	budgetID, err := uuid.Parse(c.Param("id"))
+func (h *ExpenseHandler) DeleteExpense(c *gin.Context) {
+	userID, expenseID, ok := getUserAndExpenseID(c)
+	if !ok {
+		return
+	}
+
+	err := h.service.DeleteExpense(c.Request.Context(), userID, expenseID)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, common.APIResponse{
+		c.JSON(http.StatusInternalServerError, common.APIResponse{
 			Success: false,
-			Error:   "Invalid budget ID",
+			Error:   err.Error(),
 		})
 		return
 	}
 
-	var req UpdateBudgetRequest
+	c.JSON(http.StatusOK, common.APIResponse{
+		Success: true,
+		Data:    "Expense deleted successfully",
+	})
+}
+
+func (h *ExpenseHandler) UpdateExpense(c *gin.Context) {
+	userID, expenseID, ok := getUserAndExpenseID(c)
+	if !ok {
+		return
+	}
+
+	var req UpdateExpenseRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, common.APIResponse{
 			Success: false,
@@ -115,7 +125,7 @@ func (h *Handler) UpdateBudget(c *gin.Context) {
 		return
 	}
 
-	budget, err := h.service.UpdateBudget(c.Request.Context(), userID.(uuid.UUID), budgetID, &req)
+	expense, err := h.service.UpdateExpense(c.Request.Context(), userID, expenseID, &req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, common.APIResponse{
 			Success: false,
@@ -126,22 +136,23 @@ func (h *Handler) UpdateBudget(c *gin.Context) {
 
 	c.JSON(http.StatusOK, common.APIResponse{
 		Success: true,
-		Data:    budget,
+		Data:    expense,
 	})
 }
 
-func (h *Handler) DeleteBudget(c *gin.Context) {
+func (h *ExpenseHandler) GetExpensesByCategoryID(c *gin.Context) {
 	userID, _ := c.Get(middleware.UserIDKey)
-	budgetID, err := uuid.Parse(c.Param("id"))
+	categoryID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, common.APIResponse{
 			Success: false,
-			Error:   "Invalid budget ID",
+			Error:   "Invalid category ID",
 		})
 		return
 	}
 
-	if err := h.service.DeleteBudget(c.Request.Context(), userID.(uuid.UUID), budgetID); err != nil {
+	expenses, err := h.service.GetExpensesByCategoryID(c.Request.Context(), userID.(uuid.UUID), categoryID)
+	if err != nil {
 		c.JSON(http.StatusInternalServerError, common.APIResponse{
 			Success: false,
 			Error:   err.Error(),
@@ -151,6 +162,6 @@ func (h *Handler) DeleteBudget(c *gin.Context) {
 
 	c.JSON(http.StatusOK, common.APIResponse{
 		Success: true,
-		Message: "Budget deleted successfully",
+		Data:    expenses,
 	})
 }
