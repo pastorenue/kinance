@@ -8,6 +8,7 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/joho/godotenv v1.5.1
 	github.com/mvrilo/go-redoc v0.1.5
+	github.com/shopspring/decimal v1.4.0
 	github.com/sirupsen/logrus v1.9.3
 	golang.org/x/crypto v0.13.0
 	gorm.io/driver/postgres v1.5.2

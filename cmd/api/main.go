@@ -14,6 +14,7 @@ import (
 	redoc "github.com/mvrilo/go-redoc"
 	"github.com/pastorenue/kinance/internal/auth"
 	"github.com/pastorenue/kinance/internal/budget"
+	"github.com/pastorenue/kinance/internal/expense"
 	"github.com/pastorenue/kinance/internal/receipt"
 	"github.com/pastorenue/kinance/internal/transaction"
 	"github.com/pastorenue/kinance/internal/user"
@@ -42,9 +43,20 @@ func main() {
 	budgetService := budget.NewService(db, logger)
 	transactionService := transaction.NewService(db)
 	receiptService := receipt.NewService(db, cfg.AI, logger)
+	expenseService := expense.NewExpenseService(db, logger)
+	categoryService := expense.NewCategoryService(db, logger)
 
 	// Initialize router
-	router := setupRouter(cfg, authService, userService, budgetService, transactionService, receiptService)
+	router := setupRouter(
+		cfg,
+		authService,
+		userService,
+		budgetService,
+		transactionService,
+		receiptService,
+		expenseService,
+		categoryService,
+	)
 
 	// Start server with graceful shutdown
 	srv := &http.Server{
@@ -75,9 +87,16 @@ func main() {
 	logger.Info("Server exited")
 }
 
-func setupRouter(cfg *config.Config, authSvc *auth.Service, userSvc *user.Service,
-	budgetSvc *budget.Service, transSvc *transaction.Service,
-	receiptSvc *receipt.Service) *gin.Engine {
+func setupRouter(
+	cfg *config.Config,
+	authSvc *auth.Service,
+	userSvc *user.Service,
+	budgetSvc *budget.Service,
+	transSvc *transaction.Service,
+	receiptSvc *receipt.Service,
+	expenseSvc *expense.ExpenseService,
+	categorySvc *expense.CategoryService,
+) *gin.Engine {
 	router := gin.New()
 
 	// Global middleware
@@ -129,6 +148,7 @@ func setupRouter(cfg *config.Config, authSvc *auth.Service, userSvc *user.Servic
 			budgetHandler := budget.NewHandler(budgetSvc)
 			protected.GET("/budgets", budgetHandler.GetBudgets)
 			protected.POST("/budgets", budgetHandler.CreateBudget)
+			protected.GET("/budgets/:id", budgetHandler.GetBudget)
 			protected.PUT("/budgets/:id", budgetHandler.UpdateBudget)
 			protected.DELETE("/budgets/:id", budgetHandler.DeleteBudget)
 
@@ -144,6 +164,24 @@ func setupRouter(cfg *config.Config, authSvc *auth.Service, userSvc *user.Servic
 			protected.POST("/receipts/upload", receiptHandler.UploadReceipt)
 			protected.GET("/receipts", receiptHandler.GetReceipts)
 			protected.GET("/receipts/:id", receiptHandler.GetReceipt)
+
+			// Expense and Category routes (unified handler)
+			expHandler := expense.NewHandler(expenseSvc, categorySvc)
+
+			// Category routes
+			protected.POST("/categories", expHandler.CreateCategory)
+			protected.GET("/categories", expHandler.GetCategories)
+			protected.GET("/categories/:id", expHandler.GetCategoryByID)
+			protected.PUT("/categories/:id", expHandler.UpdateCategory)
+			protected.DELETE("/categories/:id", expHandler.DeleteCategory)
+
+			// Expense routes
+			protected.POST("/expenses", expHandler.CreateExpense)
+			protected.GET("/expenses", expHandler.GetExpenses)
+			protected.GET("/expenses/:id", expHandler.GetExpenseByID)
+			protected.PUT("/expenses/:id", expHandler.UpdateExpense)
+			protected.DELETE("/expenses/:id", expHandler.DeleteExpense)
+			protected.GET("/expenses/category/:id", expHandler.GetExpensesByCategoryID)
 		}
 	}
 

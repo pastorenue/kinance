@@ -8,6 +8,7 @@ import (
 	"gorm.io/gorm/logger"
 
 	// "github.com/pastorenue/kinance/internal/budget"
+	"github.com/pastorenue/kinance/internal/expense"
 	// "github.com/pastorenue/kinance/internal/receipt"
 	// "github.com/pastorenue/kinance/internal/transaction"
 	"github.com/pastorenue/kinance/internal/user"
@@ -25,10 +26,19 @@ func NewPostgres(cfg config.DatabaseConfig) (*gorm.DB, error) {
 		return nil, err
 	}
 
+	// Create custom enum types first
+	err = createEnumTypes(db)
+	if err != nil {
+		return nil, err
+	}
+
 	// Auto-migrate models
 	err = db.AutoMigrate(
 		&user.User{},
 		// &user.Family{},
+		&expense.Category{},
+		&expense.RecurringExpense{},
+		&expense.Expense{},
 		// &budget.Budget{},
 		// &transaction.Transaction{},
 		// &transaction.Tag{},
@@ -40,4 +50,32 @@ func NewPostgres(cfg config.DatabaseConfig) (*gorm.DB, error) {
 	}
 
 	return db, nil
+}
+
+func createEnumTypes(db *gorm.DB) error {
+	// Create payment_method enum type
+	paymentMethodSQL := `
+		DO $$ BEGIN
+			CREATE TYPE payment_method AS ENUM ('cash', 'card', 'bank_transfer');
+		EXCEPTION
+			WHEN duplicate_object THEN null;
+		END $$;`
+
+	if err := db.Exec(paymentMethodSQL).Error; err != nil {
+		return fmt.Errorf("failed to create payment_method enum: %w", err)
+	}
+
+	// Create recurring_frequency enum type
+	recurringFrequencySQL := `
+		DO $$ BEGIN
+			CREATE TYPE recurring_frequency AS ENUM ('daily', 'weekly', 'monthly', 'yearly');
+		EXCEPTION
+			WHEN duplicate_object THEN null;
+		END $$;`
+
+	if err := db.Exec(recurringFrequencySQL).Error; err != nil {
+		return fmt.Errorf("failed to create recurring_frequency enum: %w", err)
+	}
+
+	return nil
 }
