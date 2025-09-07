@@ -80,6 +80,17 @@ func (s *Service) GetBudgets(ctx context.Context, userID uuid.UUID, pagination *
 	}, nil
 }
 
+func (s *Service) GetBudget(ctx context.Context, userID, budgetID uuid.UUID) (*Budget, error) {
+	var budget Budget
+	if err := s.db.WithContext(ctx).Where("id = ? AND user_id = ?", budgetID, userID).First(&budget).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.New("budget not found")
+		}
+		return nil, err
+	}
+	return &budget, nil
+}
+
 func (s *Service) UpdateBudget(ctx context.Context, userID, budgetID uuid.UUID, req *UpdateBudgetRequest) (*Budget, error) {
 	var budget Budget
 	if err := s.db.WithContext(ctx).Where("id = ? AND user_id = ?", budgetID, userID).First(&budget).Error; err != nil {
