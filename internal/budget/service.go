@@ -11,16 +11,10 @@ import (
 
 type Service struct {
 	db     *gorm.DB
-	logger Logger
+	logger common.Logger
 }
 
-type Logger interface {
-	Info(msg string, fields ...interface{})
-	Error(msg string, fields ...interface{})
-	Debug(msg string, fields ...interface{})
-}
-
-func NewService(db *gorm.DB, logger Logger) *Service {
+func NewService(db *gorm.DB, logger common.Logger) *Service {
 	return &Service{
 		db:     db,
 		logger: logger,

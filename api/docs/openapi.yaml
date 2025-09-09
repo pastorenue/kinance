@@ -974,6 +974,126 @@ paths:
                   $ref: '#/components/schemas/Expense'
         '401':
           description: Unauthorized. Missing or invalid JWT token.
+  /api/v1/expenses/recurring:
+    post:
+      tags:
+        - Expense
+      summary: Create recurring expense
+      description: |
+        Creates a new recurring expense for the authenticated user.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateRecurringExpenseRequest'
+      responses:
+        '201':
+          description: Recurring expense created successfully.
+        '400':
+          description: Invalid input.
+        '401':
+          description: Unauthorized. Missing or invalid JWT token.
+      parameters:
+        - name: recurring_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Recurring ID
+    get:
+      tags:
+        - Expense
+      summary: Get all recurring expenses
+      description: |
+        Returns a list of expenses for the authenticated user filtered by recurring ID.
+      parameters:
+        - name: recurring_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Recurring ID
+      responses:
+        '200':
+          description: List of expenses returned successfully.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Expense'
+        '401':
+          description: Unauthorized. Missing or invalid JWT token.
+  /api/v1/expenses/recurring/{recurring_id}:
+    get:
+      tags:
+        - Expense
+      summary: Get expenses by recurring ID
+      description: |
+        Returns a list of expenses for the authenticated user filtered by recurring ID.
+      parameters:
+        - name: recurring_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Recurring ID
+      responses:
+        '200':
+          description: List of expenses returned successfully.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Expense'
+        '401':
+          description: Unauthorized. Missing or invalid JWT token.
+    put:
+      tags:
+        - Expense
+      summary: Update recurring expense
+      description: |
+        Updates an existing recurring expense for the authenticated user.
+      parameters:
+        - name: recurring_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Recurring ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateRecurringExpenseRequest'
+      responses:
+        '200':
+          description: Recurring expense updated successfully.
+        '400':
+          description: Invalid input.
+        '401':
+          description: Unauthorized. Missing or invalid JWT token.
+    delete:
+      tags:
+        - Expense
+      summary: Delete recurring expense
+      description: |
+        Deletes a recurring expense for the authenticated user.
+      parameters:
+        - name: recurring_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Recurring ID
+      responses:
+        '204':
+          description: Recurring expense deleted successfully.
+        '401':
+          description: Unauthorized. Missing or invalid JWT token.
   /api/v1/categories:
     post:
       tags:
@@ -1145,3 +1265,52 @@ components:
           type: string
         description:
           type: string
+    CreateRecurringExpenseRequest:
+      type: object
+      required:
+        - amount
+        - description
+        - category
+        - payment_method
+        - interval
+        - start_date
+      properties:
+        amount:
+          type: number
+        description:
+          type: string
+        category:
+          type: string
+        payment_method:
+          type: string
+        interval:
+          type: string
+        start_date:
+          type: string
+          format: date-time
+        end_date:
+          type: string
+          format: date-time
+        occurrences:
+          type: integer
+    UpdateRecurringExpenseRequest:
+      type: object
+      properties:
+        amount:
+          type: number
+        description:
+          type: string
+        category:
+          type: string
+        payment_method:
+          type: string
+        interval:
+          type: string
+        start_date:
+          type: string
+          format: date-time
+        end_date:
+          type: string
+          format: date-time
+        occurrences:
+          type: integer

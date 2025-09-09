@@ -1,27 +1,22 @@
 package user
 
 import (
-    "context"
-    "errors"
-    "time"
-    
-    "github.com/google/uuid"
-    "golang.org/x/crypto/bcrypt"
-    "gorm.io/gorm"
+	"context"
+	"errors"
+	"time"
+
+	"github.com/google/uuid"
+	"github.com/pastorenue/kinance/internal/common"
+	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
 )
 
 type Service struct {
     db     *gorm.DB
-    logger Logger
+    logger common.Logger
 }
 
-type Logger interface {
-    Info(msg string, fields ...interface{})
-    Error(msg string, fields ...interface{})
-    Debug(msg string, fields ...interface{})
-}
-
-func NewService(db *gorm.DB, logger Logger) *Service {
+func NewService(db *gorm.DB, logger common.Logger) *Service {
     return &Service{
         db:     db,
         logger: logger,
@@ -29,7 +24,6 @@ func NewService(db *gorm.DB, logger Logger) *Service {
 }
 
 func (s *Service) CreateUser(ctx context.Context, req *CreateUserRequest) (*User, error) {
-    // Validate password confirmation
     if req.Password != req.ConfirmPassword {
         return nil, errors.New("passwords do not match")
     }

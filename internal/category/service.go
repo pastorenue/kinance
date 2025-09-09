@@ -1,34 +1,30 @@
-package expense
+package category
 
 import (
 	"context"
 	"errors"
 
 	"github.com/google/uuid"
-	"github.com/shopspring/decimal"
+	"github.com/pastorenue/kinance/internal/common"
 	"gorm.io/gorm"
 )
 
-type CategoryService struct {
+type Service struct {
 	db     *gorm.DB
-	logger Logger
+	logger common.Logger
 }
 
-func NewCategoryService(db *gorm.DB, logger Logger) *CategoryService {
-	return &CategoryService{db: db, logger: logger}
+func NewService(db *gorm.DB, logger common.Logger) *Service {
+	return &Service{db: db, logger: logger}
 }
 
-func (s *CategoryService) CreateCategory(ctx context.Context, userID uuid.UUID, req *CreateCategoryRequest) (*Category, error) {
-	if req.BudgetLimit != nil && req.BudgetLimit.LessThanOrEqual(decimal.Zero) {
-		return nil, errors.New("budget limit must be greater than zero")
-	}
+func (s *Service) CreateCategory(ctx context.Context, userID uuid.UUID, req *CreateCategoryRequest) (*Category, error) {
 
 	category := &Category{
 		Name:             req.Name,
 		UserID:           userID,
 		ParentCategoryID: req.ParentCategoryID,
 		ColorCode:        req.ColorCode,
-		BudgetLimit:      req.BudgetLimit,
 	}
 
 	category.ID = uuid.New()
@@ -38,7 +34,7 @@ func (s *CategoryService) CreateCategory(ctx context.Context, userID uuid.UUID, 
 	return category, nil
 }
 
-func (s *CategoryService) GetCategories(ctx context.Context, userID uuid.UUID) ([]Category, error) {
+func (s *Service) GetCategories(ctx context.Context, userID uuid.UUID) ([]Category, error) {
 	var categories []Category
 	if err := s.db.WithContext(ctx).Where("user_id = ?", userID).Find(&categories).Error; err != nil {
 		return nil, err
@@ -46,7 +42,7 @@ func (s *CategoryService) GetCategories(ctx context.Context, userID uuid.UUID) (
 	return categories, nil
 }
 
-func (s *CategoryService) GetCategoryByID(ctx context.Context, userID uuid.UUID, categoryID uuid.UUID) (*Category, error) {
+func (s *Service) GetCategoryByID(ctx context.Context, userID uuid.UUID, categoryID uuid.UUID) (*Category, error) {
 	var category Category
 	if err := s.db.WithContext(ctx).Where("id = ? AND user_id = ?", categoryID, userID).First(&category).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -57,7 +53,7 @@ func (s *CategoryService) GetCategoryByID(ctx context.Context, userID uuid.UUID,
 	return &category, nil
 }
 
-func (s *CategoryService) UpdateCategory(ctx context.Context, userID uuid.UUID, categoryID uuid.UUID, req *UpdateCategoryRequest) (*Category, error) {
+func (s *Service) UpdateCategory(ctx context.Context, userID uuid.UUID, categoryID uuid.UUID, req *UpdateCategoryRequest) (*Category, error) {
 	var category Category
 	if err := s.db.WithContext(ctx).Where("id = ? AND user_id = ?", categoryID, userID).First(&category).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -75,12 +71,6 @@ func (s *CategoryService) UpdateCategory(ctx context.Context, userID uuid.UUID, 
 	if req.ColorCode != nil {
 		category.ColorCode = *req.ColorCode
 	}
-	if req.BudgetLimit != nil {
-		if req.BudgetLimit.LessThanOrEqual(decimal.Zero) {
-			return nil, errors.New("budget limit must be greater than zero")
-		}
-		category.BudgetLimit = req.BudgetLimit
-	}
 
 	if err := s.db.WithContext(ctx).Save(&category).Error; err != nil {
 		return nil, err
@@ -88,7 +78,7 @@ func (s *CategoryService) UpdateCategory(ctx context.Context, userID uuid.UUID, 
 	return &category, nil
 }
 
-func (s *CategoryService) DeleteCategory(ctx context.Context, userID uuid.UUID, categoryID uuid.UUID) error {
+func (s *Service) DeleteCategory(ctx context.Context, userID uuid.UUID, categoryID uuid.UUID) error {
 	if err := s.db.WithContext(ctx).Where("id = ? AND user_id = ?", categoryID, userID).Delete(&Category{}).Error; err != nil {
 		return err
 	}

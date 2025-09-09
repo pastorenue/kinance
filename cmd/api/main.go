@@ -18,6 +18,7 @@ import (
 	"github.com/pastorenue/kinance/internal/receipt"
 	"github.com/pastorenue/kinance/internal/transaction"
 	"github.com/pastorenue/kinance/internal/user"
+	"github.com/pastorenue/kinance/internal/category"
 	"github.com/pastorenue/kinance/pkg/config"
 	"github.com/pastorenue/kinance/pkg/database"
 	"github.com/pastorenue/kinance/pkg/logger"
@@ -43,8 +44,8 @@ func main() {
 	budgetService := budget.NewService(db, logger)
 	transactionService := transaction.NewService(db)
 	receiptService := receipt.NewService(db, cfg.AI, logger)
-	expenseService := expense.NewExpenseService(db, logger)
-	categoryService := expense.NewCategoryService(db, logger)
+	expenseService := expense.NewService(db, logger)
+	categoryService := category.NewService(db, logger)
 
 	// Initialize router
 	router := setupRouter(
@@ -94,8 +95,8 @@ func setupRouter(
 	budgetSvc *budget.Service,
 	transSvc *transaction.Service,
 	receiptSvc *receipt.Service,
-	expenseSvc *expense.ExpenseService,
-	categorySvc *expense.CategoryService,
+	expenseSvc *expense.Service,
+	categorySvc *category.Service,
 ) *gin.Engine {
 	router := gin.New()
 
@@ -166,14 +167,7 @@ func setupRouter(
 			protected.GET("/receipts/:id", receiptHandler.GetReceipt)
 
 			// Expense and Category routes (unified handler)
-			expHandler := expense.NewHandler(expenseSvc, categorySvc)
-
-			// Category routes
-			protected.POST("/categories", expHandler.CreateCategory)
-			protected.GET("/categories", expHandler.GetCategories)
-			protected.GET("/categories/:id", expHandler.GetCategoryByID)
-			protected.PUT("/categories/:id", expHandler.UpdateCategory)
-			protected.DELETE("/categories/:id", expHandler.DeleteCategory)
+			expHandler := expense.NewHandler(expenseSvc)
 
 			// Expense routes
 			protected.POST("/expenses", expHandler.CreateExpense)
@@ -182,6 +176,23 @@ func setupRouter(
 			protected.PUT("/expenses/:id", expHandler.UpdateExpense)
 			protected.DELETE("/expenses/:id", expHandler.DeleteExpense)
 			protected.GET("/expenses/category/:id", expHandler.GetExpensesByCategoryID)
+
+			// Recurring Expense routes
+			protected.POST("/expenses/recurring", expHandler.CreateRecurringExpense)
+			protected.GET("/expenses/recurring", expHandler.GetRecurringExpenses)
+			protected.GET("/expenses/recurring/:id", expHandler.GetRecurringExpenseByID)
+			protected.PUT("/expenses/recurring/:id", expHandler.UpdateRecurringExpense)
+			protected.DELETE("/expenses/recurring/:id", expHandler.DeleteRecurringExpense)
+			protected.GET("/expenses/recurring/:id/history", expHandler.GetRecurringExpenseHistory)
+			protected.GET("/expenses/recurring/upcoming", expHandler.GetUpcomingRecurringExpenses)
+
+			// Category routes
+			catHandler := category.NewHandler(categorySvc)
+			protected.POST("/categories", catHandler.CreateCategory)
+			protected.GET("/categories", catHandler.GetCategories)
+			protected.GET("/categories/:id", catHandler.GetCategoryByID)
+			protected.PUT("/categories/:id", catHandler.UpdateCategory)
+			protected.DELETE("/categories/:id", catHandler.DeleteCategory)
 		}
 	}
 
