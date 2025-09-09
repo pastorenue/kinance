@@ -10,17 +10,17 @@ import (
 type Transaction struct {
 	common.BaseModel
 	UserID          uuid.UUID              `json:"user_id" gorm:"not null;index"`
-	BudgetID        *uuid.UUID             `json:"budget_id" gorm:"index"`
-	ReceiptID       *uuid.UUID             `json:"receipt_id" gorm:"index"`
 	Amount          float64                `json:"amount" gorm:"not null"`
 	Description     string                 `json:"description" gorm:"not null"`
 	Category        string                 `json:"category" gorm:"not null;index"`
-	Merchant        string                 `json:"merchant"`
 	TransactionDate time.Time              `json:"transaction_date" gorm:"not null"`
 	Type            TransactionType        `json:"type" gorm:"not null"`
 	Status          TransactionStatus      `json:"status" gorm:"default:completed"`
 	Tags            []Tag                  `json:"tags" gorm:"many2many:transaction_tags;"`
 	Metadata        map[string]interface{} `json:"metadata" gorm:"type:jsonb"`
+	TransferID      *uuid.UUID             `json:"transfer_id" gorm:"index"`
+	ExpenseID       *uuid.UUID             `json:"expense_id" gorm:"index"`
+	IncomeID        *uuid.UUID             `json:"income_id" gorm:"index"`
 }
 
 type TransactionType string
@@ -28,6 +28,7 @@ type TransactionType string
 const (
 	TypeIncome  TransactionType = "income"
 	TypeExpense TransactionType = "expense"
+	TypeTransfer TransactionType = "transfer"
 )
 
 type TransactionStatus string

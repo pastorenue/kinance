@@ -1,4 +1,4 @@
-package expense
+package category
 
 import (
 	"net/http"
@@ -9,15 +9,15 @@ import (
 	"github.com/pastorenue/kinance/pkg/middleware"
 )
 
-type CategoryHandler struct {
-	service *CategoryService
+type Handler struct {
+	service *Service
 }
 
-func NewCategoryHandler(service *CategoryService) *CategoryHandler {
-	return &CategoryHandler{service: service}
+func NewHandler(service *Service) *Handler {
+	return &Handler{service: service}
 }
 
-func (h *CategoryHandler) CreateCategory(c *gin.Context) {
+func (h *Handler) CreateCategory(c *gin.Context) {
 	userID, _ := c.Get(middleware.UserIDKey)
 
 	var req CreateCategoryRequest
@@ -45,7 +45,7 @@ func (h *CategoryHandler) CreateCategory(c *gin.Context) {
 	})
 }
 
-func (h *CategoryHandler) GetCategories(c *gin.Context) {
+func (h *Handler) GetCategories(c *gin.Context) {
 	userID, _ := c.Get(middleware.UserIDKey)
 
 	categories, err := h.service.GetCategories(c.Request.Context(), userID.(uuid.UUID))
@@ -65,7 +65,7 @@ func (h *CategoryHandler) GetCategories(c *gin.Context) {
 	})
 }
 
-func (h *CategoryHandler) GetCategoryByID(c *gin.Context) {
+func (h *Handler) GetCategoryByID(c *gin.Context) {
 	userID, categoryID, ok := getUserAndCategoryID(c)
 	if !ok {
 		return
@@ -87,7 +87,7 @@ func (h *CategoryHandler) GetCategoryByID(c *gin.Context) {
 	})
 }
 
-func (h *CategoryHandler) UpdateCategory(c *gin.Context) {
+func (h *Handler) UpdateCategory(c *gin.Context) {
 	userID, categoryID, ok := getUserAndCategoryID(c)
 	if !ok {
 		return
@@ -115,7 +115,7 @@ func (h *CategoryHandler) UpdateCategory(c *gin.Context) {
 	})
 }
 
-func (h *CategoryHandler) DeleteCategory(c *gin.Context) {
+func (h *Handler) DeleteCategory(c *gin.Context) {
 	userID, categoryID, ok := getUserAndCategoryID(c)
 	if !ok {
 		return
@@ -136,4 +136,39 @@ func (h *CategoryHandler) DeleteCategory(c *gin.Context) {
 		Data:      "Category deleted successfully",
 		StatusCode: http.StatusOK,
 	})
+}
+
+
+// getUserAndCategoryID extracts userID and categoryID from context and returns them, or writes an error response and returns false.
+func getUserAndCategoryID(c *gin.Context) (uuid.UUID, uuid.UUID, bool) {
+	userIDVal, _ := c.Get(middleware.UserIDKey)
+	userID, ok := userIDVal.(uuid.UUID)
+	if !ok {
+		c.JSON(500, common.APIResponse{
+			Success: false,
+			Error:   "Invalid user ID",
+		})
+		return uuid.Nil, uuid.Nil, false
+	}
+	categoryID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		c.JSON(400, common.APIResponse{
+			Success: false,
+			Error:   "Invalid category ID",
+		})
+		return uuid.Nil, uuid.Nil, false
+	}
+	return userID, categoryID, true
+}
+
+// bindJSONOrAbort binds JSON and handles errors in a unified way.
+func bindJSONOrAbort(c *gin.Context, obj interface{}) bool {
+	if err := c.ShouldBindJSON(obj); err != nil {
+		c.JSON(400, common.APIResponse{
+			Success: false,
+			Error:   err.Error(),
+		})
+		return false
+	}
+	return true
 }
