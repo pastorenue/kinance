@@ -19,6 +19,7 @@ import (
 	"github.com/pastorenue/kinance/internal/transaction"
 	"github.com/pastorenue/kinance/internal/user"
 	"github.com/pastorenue/kinance/internal/category"
+	"github.com/pastorenue/kinance/internal/income"
 	"github.com/pastorenue/kinance/pkg/config"
 	"github.com/pastorenue/kinance/pkg/database"
 	"github.com/pastorenue/kinance/pkg/logger"
@@ -42,10 +43,11 @@ func main() {
 	userService := user.NewService(db, logger)
 	authService := auth.NewService(db, cfg.JWT, logger)
 	budgetService := budget.NewService(db, logger)
-	transactionService := transaction.NewService(db)
 	receiptService := receipt.NewService(db, cfg.AI, logger)
 	expenseService := expense.NewService(db, logger)
 	categoryService := category.NewService(db, logger)
+	transactionService := transaction.NewService(db, logger)
+	incomeService := income.NewService(db, logger)
 
 	// Initialize router
 	router := setupRouter(
@@ -57,6 +59,7 @@ func main() {
 		receiptService,
 		expenseService,
 		categoryService,
+		incomeService,
 	)
 
 	// Start server with graceful shutdown
@@ -93,10 +96,11 @@ func setupRouter(
 	authSvc *auth.Service,
 	userSvc *user.Service,
 	budgetSvc *budget.Service,
-	transSvc *transaction.Service,
+	tranxSvc *transaction.Service,
 	receiptSvc *receipt.Service,
 	expenseSvc *expense.Service,
 	categorySvc *category.Service,
+	incomeSvc *income.Service,
 ) *gin.Engine {
 	router := gin.New()
 
@@ -154,11 +158,13 @@ func setupRouter(
 			protected.DELETE("/budgets/:id", budgetHandler.DeleteBudget)
 
 			// Transaction routes
-			transHandler := transaction.NewHandler(transSvc)
-			protected.GET("/transactions", transHandler.GetTransactions)
+			transHandler := transaction.NewHandler(tranxSvc)
+			protected.GET("/transactions", transHandler.ListTransactions)
+			protected.GET("/transactions/:id", transHandler.GetTransaction)
 			protected.POST("/transactions", transHandler.CreateTransaction)
 			protected.PUT("/transactions/:id", transHandler.UpdateTransaction)
 			protected.DELETE("/transactions/:id", transHandler.DeleteTransaction)
+			protected.POST("/transactions/expense", transHandler.CreateExpenseTransaction)
 
 			// Receipt routes
 			receiptHandler := receipt.NewHandler(receiptSvc)
@@ -193,6 +199,18 @@ func setupRouter(
 			protected.GET("/categories/:id", catHandler.GetCategoryByID)
 			protected.PUT("/categories/:id", catHandler.UpdateCategory)
 			protected.DELETE("/categories/:id", catHandler.DeleteCategory)
+
+			// Income routes
+			incomeHandler := income.NewHandler(incomeSvc)
+			protected.POST("/incomes", incomeHandler.CreateIncome)
+			protected.PUT("/incomes/source/:swift_code", incomeHandler.UpdateSource)
+			protected.GET("/incomes/source/:swift_code", incomeHandler.GetSourceBySwiftCode)
+			protected.POST("/incomes/source", incomeHandler.CreateSource)
+			protected.GET("/incomes", incomeHandler.GetIncomes)
+			protected.GET("/all-sources", incomeHandler.GetSources)
+			protected.GET("/incomes/:id", incomeHandler.GetIncomeByID)
+			protected.PUT("/incomes/:id", incomeHandler.UpdateIncome)
+			protected.DELETE("/incomes/:id", incomeHandler.DeleteIncome)
 		}
 	}
 
