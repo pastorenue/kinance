@@ -130,7 +130,7 @@ func (s *Service) UpdateIncome(ctx context.Context, userID uuid.UUID, incomeID u
 		income.Metadata = *req.Metadata
 	}
 	if req.CategoryID != nil {
-		income.CategoryID = req.CategoryID
+		income.CategoryID = *req.CategoryID
 	}
 	if req.Note != nil {
 		income.Note = *req.Note
