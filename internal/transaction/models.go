@@ -6,7 +6,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/pastorenue/kinance/internal/category"
 	"github.com/pastorenue/kinance/internal/common"
-	"github.com/pastorenue/kinance/internal/expense"
 	"github.com/shopspring/decimal"
 )
 
@@ -70,14 +69,14 @@ type CreateTransactionRequest struct {
 	TransactionDate time.Time              `json:"transaction_date" binding:"required"`
 	Type            TransactionType        `json:"type" binding:"required"`
 	Tags            []string               `json:"tags"`
-	Currency        *common.Currency       `json:"currency" binding:"required,oneof=USD EUR GBP JPY CHF NGN"`
+	Currency        common.Currency       `json:"currency" binding:"required,oneof=USD EUR GBP JPY CHF NGN"`
 	PaymentMethod   common.PaymentMethod   `json:"payment_method" binding:"required,oneof=cash card bank_transfer"`
 	Metadata        map[string]interface{} `json:"metadata"`
 }
 
-type ExpenseTransactionResponse struct {
+type TransactionResponse struct {
 	StatusCode int             `json:"status_code"`
 	Message    string          `json:"message"`
 	Transaction Transaction `json:"transaction"`
-	Expense     expense.Expense `json:"expense"`
+	Entity     interface{} `json:"entity"`
 }

@@ -165,6 +165,7 @@ func setupRouter(
 			protected.PUT("/transactions/:id", transHandler.UpdateTransaction)
 			protected.DELETE("/transactions/:id", transHandler.DeleteTransaction)
 			protected.POST("/transactions/expense", transHandler.CreateExpenseTransaction)
+			protected.POST("/transactions/income", transHandler.CreateIncomeTransaction)
 
 			// Receipt routes
 			receiptHandler := receipt.NewHandler(receiptSvc)

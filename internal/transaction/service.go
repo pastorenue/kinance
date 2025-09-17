@@ -25,16 +25,19 @@ func (s *Service) CreateExpenseTransaction(
 	ctx context.Context,
 	userID uuid.UUID,
 	req *CreateTransactionRequest,
-) (*ExpenseTransactionResponse, error) {
+) (*TransactionResponse, error) {
 	if req.CategoryID == uuid.Nil {
 		return nil, fmt.Errorf("category ID cannot be empty")
+	}
+	if req.Type != "expense" {
+		return nil, fmt.Errorf("transaction type must be 'expense'")
 	}
 
 	transaction := &Transaction{
 		UserID:          userID,
 		Type:            req.Type,
 		Amount:          req.Amount,
-		Currency:        req.Currency,
+		Currency:        &req.Currency,
 		TransactionDate: req.TransactionDate,
 		CategoryID:      req.CategoryID,
 		Description:     req.Description,
@@ -42,6 +45,17 @@ func (s *Service) CreateExpenseTransaction(
 		PaymentMethod:   req.PaymentMethod,
 	}
 	transaction.ID = uuid.New()
+
+	expense := &expense.Expense{
+		UserID:        userID,
+		Amount:        req.Amount,
+		Currency:      &req.Currency,
+		TransactionID: &transaction.ID,
+		Description:   req.Description,
+		CategoryID:    req.CategoryID,
+		PaymentMethod: req.PaymentMethod,
+	}
+	expense.ID = uuid.New()
 
 	err := s.db.WithContext(ctx).Transaction((func(tx *gorm.DB) error {
 		if err := tx.Create(transaction).Error; err != nil {
@@ -51,16 +65,6 @@ func (s *Service) CreateExpenseTransaction(
 			s.logger.Info("Transaction created successfully", "transaction_id", transaction.ID)
 		}
 
-		expense := &expense.Expense{
-			UserID:        userID,
-			Amount:        req.Amount,
-			Currency:      req.Currency,
-			TransactionID: &transaction.ID,
-			Description:   req.Description,
-			CategoryID:    req.CategoryID,
-			PaymentMethod: req.PaymentMethod,
-		}
-		expense.ID = uuid.New()
 		if err := tx.Create(expense).Error; err != nil {
 			tx.Rollback()
 			s.logger.Error("Failed to create expense", "error", err)
@@ -88,21 +92,12 @@ func (s *Service) CreateExpenseTransaction(
 		return nil, err
 	}
 
-	// Use the processing object ID to fetch the linked expense
-	var linkedExpense expense.Expense
-	if transaction.ProcessingObjectID != nil {
-		if err := s.db.First(&linkedExpense, "id = ?", *transaction.ProcessingObjectID).Error; err != nil {
-			s.logger.Error("Failed to fetch linked expense", "error", err)
-			return nil, err
-		}
-	}
-
 	// Create a response struct that includes both transaction and linked expense if needed
-	response := &ExpenseTransactionResponse{
+	response := &TransactionResponse{
 		StatusCode: http.StatusOK,
 		Message:    "Success",
 		Transaction: *transaction,
-		Expense:     linkedExpense,
+		Entity:     expense,
 	}
 
 	return response, nil
@@ -126,15 +121,20 @@ func (s *Service) GetTransactionByID(ctx context.Context, userID uuid.UUID, tran
 	return &transaction, nil
 }
 
-func (s *Service) CreateIncomeTransaction(ctx context.Context, userID uuid.UUID, req *CreateTransactionRequest) (*Transaction, error) {
+func (s *Service) CreateIncomeTransaction(ctx context.Context, userID uuid.UUID, req *CreateTransactionRequest) (*TransactionResponse, error) {
 	if req.CategoryID == uuid.Nil {
 		return nil, fmt.Errorf("category ID cannot be empty")
 	}
+	if req.Type != "income" {
+		return nil, fmt.Errorf("transaction type must be 'income'")
+	}
+
+	// Transaction instance
 	transaction := &Transaction{
 		UserID:          userID,
 		Type:            req.Type,
 		Amount:          req.Amount,
-		Currency:        req.Currency,
+		Currency:        &req.Currency,
 		TransactionDate: req.TransactionDate,
 		CategoryID:      req.CategoryID,
 		Description:     req.Description,
@@ -143,15 +143,17 @@ func (s *Service) CreateIncomeTransaction(ctx context.Context, userID uuid.UUID,
 	}
 	transaction.ID = uuid.New()
 
+	// Income instance
+	income := &income.Income{
+		UserID:        userID,
+		Amount:        req.Amount,
+		Currency:      &req.Currency,
+		CategoryID:    req.CategoryID,
+	}
+	income.ID = uuid.New()
+
 	if err := s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 
-		income := &income.Income{
-			UserID:        userID,
-			Amount:        req.Amount,
-			Currency:      req.Currency,
-			CategoryID:    req.CategoryID,
-		}
-		income.ID = uuid.New()
 		if err := tx.Create(income).Error; err != nil {
 			tx.Rollback()
 			s.logger.Error("Failed to create income", "error", err)
@@ -178,7 +180,13 @@ func (s *Service) CreateIncomeTransaction(ctx context.Context, userID uuid.UUID,
 		s.logger.Error("Failed to preload category", "error", err)
 		return nil, err
 	}
-	return transaction, nil
+	response := &TransactionResponse{
+		StatusCode: http.StatusOK,
+		Message:    "Success",
+		Transaction: *transaction,
+		Entity:    *income,
+	}
+	return response, nil
 }
 
 
@@ -191,7 +199,7 @@ func (s *Service) CreateTransferTransaction(ctx context.Context, userID uuid.UUI
 		UserID:          userID,
 		Type:            req.Type,
 		Amount:          req.Amount,
-		Currency:        req.Currency,
+		Currency:        &req.Currency,
 		TransactionDate: req.TransactionDate,
 		Description:     req.Description,
 		Metadata:        req.Metadata,
