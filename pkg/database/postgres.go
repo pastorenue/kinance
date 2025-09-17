@@ -10,10 +10,11 @@ import (
 "github.com/pastorenue/kinance/internal/budget"
 	"github.com/pastorenue/kinance/internal/expense"
 	// "github.com/pastorenue/kinance/internal/receipt"
-	// "github.com/pastorenue/kinance/internal/transaction"
+	"github.com/pastorenue/kinance/internal/transaction"
 	"github.com/pastorenue/kinance/internal/user"
 	"github.com/pastorenue/kinance/pkg/config"
 	"github.com/pastorenue/kinance/internal/category"
+	"github.com/pastorenue/kinance/internal/income"
 )
 
 func NewPostgres(cfg config.DatabaseConfig) (*gorm.DB, error) {
@@ -41,7 +42,8 @@ func NewPostgres(cfg config.DatabaseConfig) (*gorm.DB, error) {
 		&expense.RecurringExpense{},
 		&expense.Expense{},
 		&budget.Budget{},
-		// &transaction.Transaction{},
+		&transaction.Transaction{},
+		&income.Income{},
 		// &transaction.Tag{},
 		// &receipt.Receipt{},
 		// &receipt.ReceiptItem{},
@@ -78,5 +80,31 @@ func createEnumTypes(db *gorm.DB) error {
 		return fmt.Errorf("failed to create recurring_frequency enum: %w", err)
 	}
 
+	return nil
+}
+
+func DropTransactionTable(db *gorm.DB) error {
+	if err := db.Migrator().DropTable(&transaction.Transaction{}); err != nil {
+		return err
+	}
+	return nil
+}
+
+func DropAllTables(db *gorm.DB) error {
+	if err := db.Migrator().DropTable(
+		&user.User{},
+		// &user.Family{},
+		&category.Category{},
+		&expense.RecurringExpense{},
+		&expense.Expense{},
+		&budget.Budget{},
+		&transaction.Transaction{},
+		// &transaction.Tag{},
+		// &receipt.Receipt{},
+		// &receipt.ReceiptItem{},
+		&income.Income{},
+	); err != nil {
+		return err
+	}
 	return nil
 }

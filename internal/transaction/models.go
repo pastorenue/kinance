@@ -4,32 +4,27 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/pastorenue/kinance/internal/category"
 	"github.com/pastorenue/kinance/internal/common"
+	"github.com/pastorenue/kinance/internal/expense"
+	"github.com/shopspring/decimal"
 )
-
-type Transaction struct {
-	common.BaseModel
-	UserID          uuid.UUID              `json:"user_id" gorm:"not null;index"`
-	Amount          float64                `json:"amount" gorm:"not null"`
-	Description     string                 `json:"description" gorm:"not null"`
-	Category        string                 `json:"category" gorm:"not null;index"`
-	TransactionDate time.Time              `json:"transaction_date" gorm:"not null"`
-	Type            TransactionType        `json:"type" gorm:"not null"`
-	Status          TransactionStatus      `json:"status" gorm:"default:completed"`
-	Tags            []Tag                  `json:"tags" gorm:"many2many:transaction_tags;"`
-	Metadata        map[string]interface{} `json:"metadata" gorm:"type:jsonb"`
-	TransferID      *uuid.UUID             `json:"transfer_id" gorm:"index"`
-	ExpenseID       *uuid.UUID             `json:"expense_id" gorm:"index"`
-	IncomeID        *uuid.UUID             `json:"income_id" gorm:"index"`
-}
 
 type TransactionType string
 
 const (
-	TypeIncome  TransactionType = "income"
-	TypeExpense TransactionType = "expense"
+	TypeIncome   TransactionType = "income"
+	TypeExpense  TransactionType = "expense"
 	TypeTransfer TransactionType = "transfer"
 )
+
+type Merchant struct {
+	common.BaseModel
+	Name    string    `json:"name" gorm:"not null;uniqueIndex"`
+	Website string    `json:"website"`
+	LogoURL string    `json:"logo_url"`
+	UserID  uuid.UUID `json:"user_id" gorm:"not null;index"`
+}
 
 type TransactionStatus string
 
@@ -39,6 +34,27 @@ const (
 	StatusCanceled  TransactionStatus = "canceled"
 )
 
+type Transaction struct {
+	common.BaseModel
+	UserID               uuid.UUID              `json:"user_id" gorm:"not null;index"`
+	Amount               decimal.Decimal        `json:"amount" gorm:"not null"`
+	Description          string                 `json:"description"`
+	CategoryID           uuid.UUID              `json:"category_id" gorm:"index"`
+	Category             *category.Category     `json:"category" gorm:"foreignKey:CategoryID"`
+	TransactionDate      time.Time              `json:"transaction_date" gorm:"not null"`
+	Status               TransactionStatus      `json:"status" gorm:"default:completed"`
+	Tags                 []Tag                  `json:"tags" gorm:"many2many:transaction_tags;"`
+	Type                 TransactionType        `json:"type" gorm:"not null"`
+	ProcessingObjectID   *uuid.UUID             `json:"processing_object_id" gorm:"uniqueIndex"`
+	Currency             *common.Currency       `json:"currency" gorm:"not null;default:EUR"`
+	ExcludeFromAnalytics bool                   `json:"exclude_from_analytics" gorm:"default:false"`
+	MerchantID           *uuid.UUID             `json:"merchant" gorm:"index"`
+	Merchant             *Merchant              `json:"merchant_details" gorm:"foreignKey:MerchantID"`
+	ReceiptID            *uuid.UUID             `json:"receipt" gorm:"index"`
+	Metadata             map[string]interface{} `json:"metadata" gorm:"type:jsonb"`
+	PaymentMethod        common.PaymentMethod   `json:"payment_method" gorm:"type:payment_method"`
+}
+
 type Tag struct {
 	common.BaseModel
 	Name   string    `json:"name" gorm:"uniqueIndex;not null"`
@@ -47,11 +63,21 @@ type Tag struct {
 }
 
 type CreateTransactionRequest struct {
-	Amount          float64         `json:"amount" binding:"required"`
-	Description     string          `json:"description" binding:"required"`
-	Category        string          `json:"category" binding:"required"`
-	Merchant        string          `json:"merchant"`
-	TransactionDate string          `json:"transaction_date" binding:"required"`
-	Type            TransactionType `json:"type" binding:"required"`
-	Tags            []string        `json:"tags"`
+	Amount          decimal.Decimal        `json:"amount" binding:"required"`
+	Description     string                 `json:"description" binding:"required"`
+	CategoryID      uuid.UUID              `json:"category_id" binding:"required"`
+	Merchant        string                 `json:"merchant"`
+	TransactionDate time.Time              `json:"transaction_date" binding:"required"`
+	Type            TransactionType        `json:"type" binding:"required"`
+	Tags            []string               `json:"tags"`
+	Currency        *common.Currency       `json:"currency" binding:"required,oneof=USD EUR GBP JPY CHF NGN"`
+	PaymentMethod   common.PaymentMethod   `json:"payment_method" binding:"required,oneof=cash card bank_transfer"`
+	Metadata        map[string]interface{} `json:"metadata"`
+}
+
+type ExpenseTransactionResponse struct {
+	StatusCode int             `json:"status_code"`
+	Message    string          `json:"message"`
+	Transaction Transaction `json:"transaction"`
+	Expense     expense.Expense `json:"expense"`
 }
