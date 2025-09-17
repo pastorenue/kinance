@@ -49,7 +49,7 @@ func (h *Handler) CreateExpenseTransaction(c *gin.Context)  {
 
 func (h *Handler) CreateIncomeTransaction(c *gin.Context) {
 	userID, _ := c.Get(middleware.UserIDKey)
-	var req CreateTransactionRequest
+	var req CreateIncomeTransactionRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(400, gin.H{"error": err.Error()})
 		return
