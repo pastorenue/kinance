@@ -38,16 +38,32 @@ func (h *Handler) CreateExpenseTransaction(c *gin.Context)  {
 		return
 	}
 
-	transaction, err := h.service.CreateExpenseTransaction(c.Request.Context(), userID.(uuid.UUID), &req)
+	trnxResponse, err := h.service.CreateExpenseTransaction(c.Request.Context(), userID.(uuid.UUID), &req)
 	if err != nil {
 		c.JSON(500, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(201, transaction)
+	c.JSON(201, trnxResponse)
 }
 
-func (h *Handler) CreateIncomeTransaction(c *gin.Context)   {}
+func (h *Handler) CreateIncomeTransaction(c *gin.Context) {
+	userID, _ := c.Get(middleware.UserIDKey)
+	var req CreateTransactionRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+
+	trnxResponse, err := h.service.CreateIncomeTransaction(c.Request.Context(), userID.(uuid.UUID), &req)
+	if err != nil {
+		c.JSON(500, gin.H{"error": err.Error()})
+		return
+	}
+	
+	c.JSON(201, trnxResponse)
+}
+
 func (h *Handler) CreateTransferTransaction(c *gin.Context) {}
 func (h *Handler) GetTransaction(c *gin.Context) {
 	userID, _ := c.Get(middleware.UserIDKey)
