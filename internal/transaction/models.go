@@ -74,9 +74,12 @@ type CreateTransactionRequest struct {
 	Metadata        map[string]interface{} `json:"metadata"`
 }
 
+type CreateIncomeTransactionRequest struct {
+	CreateTransactionRequest
+	SwiftCode string `json:"swift_code" binding:"required,len=8|len=11"`
+}
+
 type TransactionResponse struct {
-	StatusCode int             `json:"status_code"`
-	Message    string          `json:"message"`
 	Transaction Transaction `json:"transaction"`
 	Entity     interface{} `json:"entity"`
 }

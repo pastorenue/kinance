@@ -2,8 +2,8 @@ package transaction
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"net/http"
 
 	"github.com/google/uuid"
 	"github.com/pastorenue/kinance/internal/common"
@@ -94,10 +94,8 @@ func (s *Service) CreateExpenseTransaction(
 
 	// Create a response struct that includes both transaction and linked expense if needed
 	response := &TransactionResponse{
-		StatusCode: http.StatusOK,
-		Message:    "Success",
 		Transaction: *transaction,
-		Entity:     expense,
+		Entity:      expense,
 	}
 
 	return response, nil
@@ -121,7 +119,8 @@ func (s *Service) GetTransactionByID(ctx context.Context, userID uuid.UUID, tran
 	return &transaction, nil
 }
 
-func (s *Service) CreateIncomeTransaction(ctx context.Context, userID uuid.UUID, req *CreateTransactionRequest) (*TransactionResponse, error) {
+func (s *Service) CreateIncomeTransaction(ctx context.Context, userID uuid.UUID, req *CreateIncomeTransactionRequest) (*TransactionResponse, error) {
+	var source income.Source
 	if req.CategoryID == uuid.Nil {
 		return nil, fmt.Errorf("category ID cannot be empty")
 	}
@@ -144,25 +143,44 @@ func (s *Service) CreateIncomeTransaction(ctx context.Context, userID uuid.UUID,
 	transaction.ID = uuid.New()
 
 	// Income instance
-	income := &income.Income{
-		UserID:        userID,
-		Amount:        req.Amount,
-		Currency:      &req.Currency,
-		CategoryID:    req.CategoryID,
+	incomeInstance := &income.Income{
+		UserID:     userID,
+		Amount:     req.Amount,
+		Currency:   &req.Currency,
+		CategoryID: req.CategoryID,
 	}
-	income.ID = uuid.New()
+	incomeInstance.ID = uuid.New()
 
 	if err := s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-
-		if err := tx.Create(income).Error; err != nil {
+		if err := tx.Where("swift_code = ?", req.SwiftCode).First(&source).Error; err != nil {
+			if !errors.Is(err, gorm.ErrRecordNotFound) {
+				s.logger.Info("No source found for swift code. creating one", "swift_code", req.SwiftCode, "error", err)
+				source = income.Source{
+					Name:      req.SwiftCode, // Should be updated to a proper name
+					SwiftCode: req.SwiftCode,
+				}
+				source.ID = uuid.New()
+				if err := tx.Create(source).Error; err != nil {
+					tx.Rollback()
+					s.logger.Error("Failed to create source", "error", err)
+					return err
+				}
+			} else {
+				s.logger.Error("Failed to retrieve source", "error", err)
+				return err
+			}
+		}
+		incomeInstance.SourceID = source.ID
+		incomeInstance.Source = &source
+		if err := tx.Create(incomeInstance).Error; err != nil {
 			tx.Rollback()
 			s.logger.Error("Failed to create income", "error", err)
 			return err
 		} else {
-			s.logger.Info("Income created successfully", "income_id", income.ID)
+			s.logger.Info("Income created successfully", "income_id", incomeInstance.ID)
 		}
 
-		transaction.ProcessingObjectID = &income.ID
+		transaction.ProcessingObjectID = &incomeInstance.ID
 		if err := tx.Save(transaction).Error; err != nil {
 			tx.Rollback()
 			s.logger.Error("Failed to create income transaction", "error", err)
@@ -181,14 +199,11 @@ func (s *Service) CreateIncomeTransaction(ctx context.Context, userID uuid.UUID,
 		return nil, err
 	}
 	response := &TransactionResponse{
-		StatusCode: http.StatusOK,
-		Message:    "Success",
 		Transaction: *transaction,
-		Entity:    *income,
+		Entity:      *incomeInstance,
 	}
 	return response, nil
 }
-
 
 func (s *Service) LinkExpenseToTransaction(ctx context.Context, transactionID uuid.UUID, expenseID uuid.UUID) error {
 	return s.linkToTransaction(ctx, expenseID, transactionID)
@@ -221,7 +236,6 @@ func (s *Service) LinkTransferToTransaction(ctx context.Context, transactionID u
 	return s.linkToTransaction(ctx, transferID, transactionID)
 }
 
-
 func (s *Service) linkToTransaction(ctx context.Context, processingObjectID uuid.UUID, transactionID uuid.UUID) error {
 	var transaction Transaction
 	if err := s.db.WithContext(ctx).First(&transaction, "id = ?", transactionID).Error; err != nil {
@@ -245,10 +259,10 @@ func (s *Service) getAggregatedTransactionsByMonth(
 	aggregated := make(map[string]float64)
 
 	query := s.db.WithContext(ctx).
-			Model(&Transaction{}).
-			Select("DATE_TRUNC(?, transaction_date) AS month, SUM(amount) AS total", groupBy).
-			Where("user_id = ?", userID).
-			Group("month")
+		Model(&Transaction{}).
+		Select("DATE_TRUNC(?, transaction_date) AS month, SUM(amount) AS total", groupBy).
+		Where("user_id = ?", userID).
+		Group("month")
 
 	if err := query.Scan(&aggregated).Error; err != nil {
 		s.logger.Error("Failed to get aggregated transactions", "error", err)
