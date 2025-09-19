@@ -169,7 +169,7 @@ func (s *Service) CreateIncomeTransaction(ctx context.Context, userID uuid.UUID,
 				s.logger.Error("Failed to retrieve source", "error", err)
 				return err
 			}
-		}
+		} 
 		incomeInstance.SourceID = source.ID
 		incomeInstance.Source = &source
 		if err := tx.Create(incomeInstance).Error; err != nil {
