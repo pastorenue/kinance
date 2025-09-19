@@ -72,9 +72,9 @@ func TestHandlerListTransactions_Success(t *testing.T) {
 		Description:     "Test transaction",
 		CategoryID:      testCategory.ID,
 		TransactionDate: time.Now(),
-		Type:           TypeExpense,
-		Currency:       ptrCurrency(common.EUR),
-		PaymentMethod:  common.Card,
+		Type:            TypeExpense,
+		Currency:        ptrCurrency(common.EUR),
+		PaymentMethod:   common.Card,
 	}
 	testTransaction.ID = uuid.New()
 	err = db.Create(testTransaction).Error
@@ -223,9 +223,9 @@ func TestHandlerGetTransaction_Success(t *testing.T) {
 		Description:     "Test transaction",
 		CategoryID:      testCategory.ID,
 		TransactionDate: time.Now(),
-		Type:           TypeExpense,
-		Currency:       ptrCurrency(common.EUR),
-		PaymentMethod:  common.Card,
+		Type:            TypeExpense,
+		Currency:        ptrCurrency(common.EUR),
+		PaymentMethod:   common.Card,
 	}
 	testTransaction.ID = uuid.New()
 	err = db.Create(testTransaction).Error
