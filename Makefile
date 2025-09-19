@@ -15,7 +15,7 @@ into_db:
 
 # Run tests
 test:
-	go test -v ./...
+	go test -v -cover ./...
 
 # Run tests with coverage
 test-coverage:

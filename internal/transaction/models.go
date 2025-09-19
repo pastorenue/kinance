@@ -50,7 +50,7 @@ type Transaction struct {
 	MerchantID           *uuid.UUID             `json:"merchant" gorm:"index"`
 	Merchant             *Merchant              `json:"merchant_details" gorm:"foreignKey:MerchantID"`
 	ReceiptID            *uuid.UUID             `json:"receipt" gorm:"index"`
-	Metadata             map[string]interface{} `json:"metadata" gorm:"type:jsonb"`
+	Metadata             map[string]interface{} `json:"metadata" gorm:"type:json;serializer:json"`
 	PaymentMethod        common.PaymentMethod   `json:"payment_method" gorm:"type:payment_method"`
 }
 
@@ -69,7 +69,7 @@ type CreateTransactionRequest struct {
 	TransactionDate time.Time              `json:"transaction_date" binding:"required"`
 	Type            TransactionType        `json:"type" binding:"required"`
 	Tags            []string               `json:"tags"`
-	Currency        common.Currency       `json:"currency" binding:"required,oneof=USD EUR GBP JPY CHF NGN"`
+	Currency        common.Currency        `json:"currency" binding:"required,oneof=USD EUR GBP JPY CHF NGN"`
 	PaymentMethod   common.PaymentMethod   `json:"payment_method" binding:"required,oneof=cash card bank_transfer"`
 	Metadata        map[string]interface{} `json:"metadata"`
 }
@@ -81,5 +81,5 @@ type CreateIncomeTransactionRequest struct {
 
 type TransactionResponse struct {
 	Transaction Transaction `json:"transaction"`
-	Entity     interface{} `json:"entity"`
+	Entity      interface{} `json:"entity"`
 }
