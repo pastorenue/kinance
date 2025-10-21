@@ -16,19 +16,16 @@ import (
 )
 
 type Service struct {
-	db        *gorm.DB
-	jwtConfig config.JWTConfig
-	logger    common.Logger
-	userSvc   *user.Service
+	db     *gorm.DB
+jwtCfg config.JWTConfig
+	logger common.Logger
 }
 
-// Claims moved to internal/common/claims.go
-
-func NewService(db *gorm.DB, jwtConfig config.JWTConfig, logger common.Logger) *Service {
+func NewService(db *gorm.DB, jwtCfg config.JWTConfig, logger common.Logger) *Service {
 	return &Service{
-		db:        db,
-		jwtConfig: jwtConfig,
-		logger:    logger,
+		db:     db,
+		jwtCfg: jwtCfg,
+		logger: logger,
 	}
 }
 
@@ -63,7 +60,7 @@ func (s *Service) Login(ctx context.Context, email, password string) (*LoginResp
 		User:         &user,
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
-		ExpiresIn:    s.jwtConfig.ExpirationTime,
+		ExpiresIn:    s.jwtCfg.ExpirationTime,
 	}, nil
 }
 
@@ -73,16 +70,15 @@ func (s *Service) generateAccessToken(user *user.User) (string, error) {
 		Email:  user.Email,
 		Role:   string(user.Role),
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Duration(s.jwtConfig.ExpirationTime) * time.Second)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Duration(s.jwtCfg.ExpirationTime) * time.Second)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 			Subject:   user.ID.String(),
 		},
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-    return token.SignedString([]byte(s.jwtConfig.Secret))
+	return token.SignedString([]byte(s.jwtCfg.Secret))
 }
-
 func (s *Service) generateRefreshToken(user *user.User) (string, error) {
 	claims := &jwt.RegisteredClaims{
 		ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * 7 * time.Hour)), // 7 days
@@ -91,12 +87,12 @@ func (s *Service) generateRefreshToken(user *user.User) (string, error) {
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString([]byte(s.jwtConfig.Secret))
+	return token.SignedString([]byte(s.jwtCfg.Secret))
 }
 
 func (s *Service) ValidateToken(tokenString string) (uuid.UUID, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &common.Claims{}, func(token *jwt.Token) (interface{}, error) {
-		return []byte(s.jwtConfig.Secret), nil
+		return []byte(s.jwtCfg.Secret), nil
 	})
 
 	if err != nil {

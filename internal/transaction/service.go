@@ -236,24 +236,3 @@ func (s *Service) linkToTransaction(ctx context.Context, processingObjectID uuid
 	}
 	return nil
 }
-
-func (s *Service) getAggregatedTransactionsByMonth(
-	ctx context.Context,
-	userID uuid.UUID,
-	groupBy string,
-) (map[string]float64, error) {
-	aggregated := make(map[string]float64)
-
-	query := s.db.WithContext(ctx).
-			Model(&Transaction{}).
-			Select("DATE_TRUNC(?, transaction_date) AS month, SUM(amount) AS total", groupBy).
-			Where("user_id = ?", userID).
-			Group("month")
-
-	if err := query.Scan(&aggregated).Error; err != nil {
-		s.logger.Error("Failed to get aggregated transactions", "error", err)
-		return nil, err
-	}
-
-	return aggregated, nil
-}

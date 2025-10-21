@@ -20,6 +20,7 @@ import (
 	"github.com/pastorenue/kinance/internal/user"
 	"github.com/pastorenue/kinance/internal/category"
 	"github.com/pastorenue/kinance/internal/income"
+	"github.com/pastorenue/kinance/internal/investment"
 	"github.com/pastorenue/kinance/pkg/config"
 	"github.com/pastorenue/kinance/pkg/database"
 	"github.com/pastorenue/kinance/pkg/logger"
@@ -48,6 +49,7 @@ func main() {
 	categoryService := category.NewService(db, logger)
 	transactionService := transaction.NewService(db, logger)
 	incomeService := income.NewService(db, logger)
+	investmentService := investment.NewService(db, logger)
 
 	// Initialize router
 	router := setupRouter(
@@ -60,6 +62,7 @@ func main() {
 		expenseService,
 		categoryService,
 		incomeService,
+		investmentService,
 	)
 
 	// Start server with graceful shutdown
@@ -101,6 +104,7 @@ func setupRouter(
 	expenseSvc *expense.Service,
 	categorySvc *category.Service,
 	incomeSvc *income.Service,
+	investmentSvc *investment.Service,
 ) *gin.Engine {
 	router := gin.New()
 
@@ -212,6 +216,14 @@ func setupRouter(
 			protected.GET("/incomes/:id", incomeHandler.GetIncomeByID)
 			protected.PUT("/incomes/:id", incomeHandler.UpdateIncome)
 			protected.DELETE("/incomes/:id", incomeHandler.DeleteIncome)
+
+			// Investment routes
+			investmentHandler := investment.NewHandler(investmentSvc)
+			protected.GET("/investments", investmentHandler.GetInvestments)
+			protected.POST("/investments", investmentHandler.CreateInvestment)
+			protected.GET("/investments/:id", investmentHandler.GetInvestment)
+			protected.PUT("/investments/:id", investmentHandler.UpdateInvestment)
+			protected.DELETE("/investments/:id", investmentHandler.DeleteInvestment)
 		}
 	}
 
