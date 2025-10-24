@@ -44,3 +44,17 @@ type Report struct {
 	Status     DocumentStatus `json:"status"`
 	ReportType ReportType `json:"report_type"`
 }
+
+// Request types
+type GenerateReportRequest struct {
+	Title      string     `json:"title" binding:"required"`
+	ReportType ReportType `json:"report_type" binding:"required"`
+	From       time.Time  `json:"from" binding:"required"`
+	To         time.Time  `json:"to" binding:"required"`
+}
+
+type GenerateStatementRequest struct {
+	Description string    `json:"description" binding:"required"`
+	From        time.Time `json:"from" binding:"required"`
+	To          time.Time `json:"to" binding:"required"`
+}

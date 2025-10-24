@@ -14,13 +14,14 @@ import (
 	redoc "github.com/mvrilo/go-redoc"
 	"github.com/pastorenue/kinance/internal/auth"
 	"github.com/pastorenue/kinance/internal/budget"
+	"github.com/pastorenue/kinance/internal/category"
+	"github.com/pastorenue/kinance/internal/document"
 	"github.com/pastorenue/kinance/internal/expense"
+	"github.com/pastorenue/kinance/internal/income"
+	"github.com/pastorenue/kinance/internal/investment"
 	"github.com/pastorenue/kinance/internal/receipt"
 	"github.com/pastorenue/kinance/internal/transaction"
 	"github.com/pastorenue/kinance/internal/user"
-	"github.com/pastorenue/kinance/internal/category"
-	"github.com/pastorenue/kinance/internal/income"
-	"github.com/pastorenue/kinance/internal/investment"
 	"github.com/pastorenue/kinance/pkg/config"
 	"github.com/pastorenue/kinance/pkg/database"
 	"github.com/pastorenue/kinance/pkg/logger"
@@ -50,6 +51,10 @@ func main() {
 	transactionService := transaction.NewService(db, logger)
 	incomeService := income.NewService(db, logger)
 	investmentService := investment.NewService(db, logger)
+	
+	// Initialize document service with local storage
+	storageProvider := document.NewLocalStorageProvider("./storage/documents")
+	documentService := document.NewService(db, logger, storageProvider)
 
 	// Initialize router
 	router := setupRouter(
@@ -63,6 +68,7 @@ func main() {
 		categoryService,
 		incomeService,
 		investmentService,
+		documentService,
 	)
 
 	// Start server with graceful shutdown
@@ -105,6 +111,7 @@ func setupRouter(
 	categorySvc *category.Service,
 	incomeSvc *income.Service,
 	investmentSvc *investment.Service,
+	documentSvc *document.Service,
 ) *gin.Engine {
 	router := gin.New()
 
@@ -217,13 +224,22 @@ func setupRouter(
 			protected.PUT("/incomes/:id", incomeHandler.UpdateIncome)
 			protected.DELETE("/incomes/:id", incomeHandler.DeleteIncome)
 
-			// Investment routes
-			investmentHandler := investment.NewHandler(investmentSvc)
-			protected.GET("/investments", investmentHandler.GetInvestments)
-			protected.POST("/investments", investmentHandler.CreateInvestment)
-			protected.GET("/investments/:id", investmentHandler.GetInvestment)
-			protected.PUT("/investments/:id", investmentHandler.UpdateInvestment)
-			protected.DELETE("/investments/:id", investmentHandler.DeleteInvestment)
+		// Investment routes
+		investmentHandler := investment.NewHandler(investmentSvc)
+		protected.GET("/investments", investmentHandler.GetInvestments)
+		protected.POST("/investments", investmentHandler.CreateInvestment)
+		protected.GET("/investments/:id", investmentHandler.GetInvestment)
+		protected.PUT("/investments/:id", investmentHandler.UpdateInvestment)
+		protected.DELETE("/investments/:id", investmentHandler.DeleteInvestment)
+
+		// Document routes
+		documentHandler := document.NewHandler(documentSvc)
+		protected.POST("/documents/reports", documentHandler.GenerateReport)
+		protected.POST("/documents/statements", documentHandler.GenerateStatement)
+		protected.GET("/documents/reports", documentHandler.ListReports)
+		protected.GET("/documents/statements", documentHandler.ListStatements)
+		protected.GET("/documents/reports/:id", documentHandler.GetReport)
+		protected.GET("/documents/statements/:id", documentHandler.GetStatement)
 		}
 	}
 

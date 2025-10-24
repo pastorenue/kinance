@@ -8,13 +8,14 @@ import (
 	"gorm.io/gorm/logger"
 
 "github.com/pastorenue/kinance/internal/budget"
+	"github.com/pastorenue/kinance/internal/category"
+	"github.com/pastorenue/kinance/internal/document"
 	"github.com/pastorenue/kinance/internal/expense"
+	"github.com/pastorenue/kinance/internal/income"
 	// "github.com/pastorenue/kinance/internal/receipt"
 	"github.com/pastorenue/kinance/internal/transaction"
 	"github.com/pastorenue/kinance/internal/user"
 	"github.com/pastorenue/kinance/pkg/config"
-	"github.com/pastorenue/kinance/internal/category"
-	"github.com/pastorenue/kinance/internal/income"
 )
 
 func NewPostgres(cfg config.DatabaseConfig) (*gorm.DB, error) {
@@ -44,6 +45,8 @@ func NewPostgres(cfg config.DatabaseConfig) (*gorm.DB, error) {
 		&budget.Budget{},
 		&transaction.Transaction{},
 		&income.Income{},
+		&document.Statement{},
+		&document.Report{},
 		// &transaction.Tag{},
 		// &receipt.Receipt{},
 		// &receipt.ReceiptItem{},
