@@ -14,12 +14,13 @@ import (
 	redoc "github.com/mvrilo/go-redoc"
 	"github.com/pastorenue/kinance/internal/auth"
 	"github.com/pastorenue/kinance/internal/budget"
+	"github.com/pastorenue/kinance/internal/category"
 	"github.com/pastorenue/kinance/internal/expense"
+	"github.com/pastorenue/kinance/internal/income"
+	"github.com/pastorenue/kinance/internal/repository"
 	"github.com/pastorenue/kinance/internal/receipt"
 	"github.com/pastorenue/kinance/internal/transaction"
 	"github.com/pastorenue/kinance/internal/user"
-	"github.com/pastorenue/kinance/internal/category"
-	"github.com/pastorenue/kinance/internal/income"
 	"github.com/pastorenue/kinance/pkg/config"
 	"github.com/pastorenue/kinance/pkg/database"
 	"github.com/pastorenue/kinance/pkg/logger"
@@ -49,6 +50,13 @@ func main() {
 	transactionService := transaction.NewService(db, logger)
 	incomeService := income.NewService(db, logger)
 
+	// Initialize OAuth and token repository
+	redisAddr := fmt.Sprintf("%s:%d", cfg.Redis.Host, cfg.Redis.Port)
+	tokenRepo := repository.NewTokenRepository(redisAddr, cfg.Redis.Password, cfg.Redis.DB)
+	oauthSvc := auth.NewOAuthService(cfg, tokenRepo)
+	oauthHandler := auth.NewOAuthHandler(oauthSvc, userService)
+	googleHandler := auth.NewGoogleHandler(cfg, tokenRepo, userService, authService)
+
 	// Initialize router
 	router := setupRouter(
 		cfg,
@@ -60,6 +68,8 @@ func main() {
 		expenseService,
 		categoryService,
 		incomeService,
+		oauthHandler,
+		googleHandler,
 	)
 
 	// Start server with graceful shutdown
@@ -101,14 +111,16 @@ func setupRouter(
 	expenseSvc *expense.Service,
 	categorySvc *category.Service,
 	incomeSvc *income.Service,
+	oauthHandler *auth.OAuthHandler,
+	googleHandler *auth.GoogleHandler,
 ) *gin.Engine {
 	router := gin.New()
 
 	// Global middleware
-	// router.Use(middleware.Logger())
-	// router.Use(middleware.Recovery())
-	// router.Use(middleware.CORS())
-	// router.Use(middleware.RateLimit())
+	router.Use(middleware.Trace())
+	router.Use(middleware.Recovery())
+	router.Use(middleware.CORS())
+	router.Use(middleware.RateLimit(cfg.MiddlewareConf.RateLimit))
 
 	// Health check
 	router.GET("/health", func(c *gin.Context) {
@@ -134,6 +146,16 @@ func setupRouter(
 		v1.POST("/auth/register", authHandler.Register)
 		v1.POST("/auth/login", authHandler.Login)
 		v1.POST("/auth/refresh", authHandler.RefreshToken)
+
+		// OAuth2 Authorization Server style endpoints
+		v1.GET("/oauth/authorize", gin.WrapF(oauthHandler.Authorize))
+		v1.POST("/oauth/token", gin.WrapF(oauthHandler.Token))
+		v1.POST("/oauth/introspect", gin.WrapF(oauthHandler.Introspect))
+		v1.POST("/oauth/revoke", gin.WrapF(oauthHandler.Revoke))
+
+		// Google OAuth2 login
+		v1.GET("/auth/google/login", googleHandler.Login)
+		v1.GET("/auth/google/callback", googleHandler.Callback)
 
 		// Protected routes
 		protected := v1.Group("/")

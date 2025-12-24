@@ -11,9 +11,17 @@ type Config struct {
 	Server   ServerConfig
 	Database DatabaseConfig
 	Redis    RedisConfig
+	Client   ClientConfig
 	JWT      JWTConfig
 	AI       AIConfig
+	Google   GoogleConfig
 	LogLevel string
+	MiddlewareConf MiddlewareConfig
+}
+
+type ClientConfig struct {
+	ClientID     string
+	ClientSecret string
 }
 
 type ServerConfig struct {
@@ -48,6 +56,17 @@ type AIConfig struct {
 	MLServiceURL  string
 }
 
+type GoogleConfig struct {
+	ClientID     string
+	ClientSecret string
+	RedirectURL  string
+	AllowedHD    string
+}
+
+type MiddlewareConfig struct {
+	RateLimit int
+}
+
 func Load() *Config {
 	_ = godotenv.Load()
 	return &Config{
@@ -57,7 +76,7 @@ func Load() *Config {
 		},
 		Database: DatabaseConfig{
 			Host:     getEnv("DB_HOST", "localhost"),
-			Port:     getIntEnv("DB_PORT", 5434),
+			Port:     getIntEnv("DB_PORT", 5432),
 			User:     getEnv("DB_USER", "finfam"),
 			Password: getEnv("DB_PASSWORD", ""),
 			DBName:   getEnv("DB_NAME", "finfam"),
@@ -78,7 +97,20 @@ func Load() *Config {
 			OCRAPIKey:     getEnv("OCR_API_KEY", ""),
 			MLServiceURL:  getEnv("ML_SERVICE_URL", ""),
 		},
+		Client: ClientConfig{
+			ClientID:     getEnv("CLIENT_ID", ""),
+			ClientSecret: getEnv("CLIENT_SECRET", ""),
+		},
+		Google: GoogleConfig{
+			ClientID:     getEnv("GOOGLE_CLIENT_ID", ""),
+			ClientSecret: getEnv("GOOGLE_CLIENT_SECRET", ""),
+			RedirectURL:  getEnv("GOOGLE_REDIRECT_URL", ""),
+			AllowedHD:    getEnv("GOOGLE_ALLOWED_HD", ""),
+		},
 		LogLevel: getEnv("LOG_LEVEL", "info"),
+		MiddlewareConf: MiddlewareConfig{
+			RateLimit: getIntEnv("RATE_LIMIT", 100),
+		},
 	}
 }
 

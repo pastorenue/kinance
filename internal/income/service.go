@@ -167,8 +167,8 @@ func (s *Service) CreateSource(ctx context.Context, userID uuid.UUID, req *Creat
 	source := &Source{
 		Name:        req.Name,
 		Description: req.Description,
-		SwiftCode: req.SwiftCode,
-		LogoURL:    req.LogoURL,
+		SwiftCode:   req.SwiftCode,
+		LogoURL:     req.LogoURL,
 	}
 
 	source.ID = uuid.New()

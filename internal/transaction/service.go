@@ -94,10 +94,10 @@ func (s *Service) CreateExpenseTransaction(
 
 	// Create a response struct that includes both transaction and linked expense if needed
 	response := &TransactionResponse{
-		StatusCode: http.StatusOK,
-		Message:    "Success",
+		StatusCode:  http.StatusOK,
+		Message:     "Success",
 		Transaction: *transaction,
-		Entity:     expense,
+		Entity:      expense,
 	}
 
 	return response, nil
@@ -145,10 +145,10 @@ func (s *Service) CreateIncomeTransaction(ctx context.Context, userID uuid.UUID,
 
 	// Income instance
 	income := &income.Income{
-		UserID:        userID,
-		Amount:        req.Amount,
-		Currency:      &req.Currency,
-		CategoryID:    req.CategoryID,
+		UserID:     userID,
+		Amount:     req.Amount,
+		Currency:   &req.Currency,
+		CategoryID: req.CategoryID,
 	}
 	income.ID = uuid.New()
 
@@ -181,14 +181,13 @@ func (s *Service) CreateIncomeTransaction(ctx context.Context, userID uuid.UUID,
 		return nil, err
 	}
 	response := &TransactionResponse{
-		StatusCode: http.StatusOK,
-		Message:    "Success",
+		StatusCode:  http.StatusOK,
+		Message:     "Success",
 		Transaction: *transaction,
-		Entity:    *income,
+		Entity:      *income,
 	}
 	return response, nil
 }
-
 
 func (s *Service) LinkExpenseToTransaction(ctx context.Context, transactionID uuid.UUID, expenseID uuid.UUID) error {
 	return s.linkToTransaction(ctx, expenseID, transactionID)
@@ -221,7 +220,6 @@ func (s *Service) LinkTransferToTransaction(ctx context.Context, transactionID u
 	return s.linkToTransaction(ctx, transferID, transactionID)
 }
 
-
 func (s *Service) linkToTransaction(ctx context.Context, processingObjectID uuid.UUID, transactionID uuid.UUID) error {
 	var transaction Transaction
 	if err := s.db.WithContext(ctx).First(&transaction, "id = ?", transactionID).Error; err != nil {
@@ -245,10 +243,10 @@ func (s *Service) getAggregatedTransactionsByMonth(
 	aggregated := make(map[string]float64)
 
 	query := s.db.WithContext(ctx).
-			Model(&Transaction{}).
-			Select("DATE_TRUNC(?, transaction_date) AS month, SUM(amount) AS total", groupBy).
-			Where("user_id = ?", userID).
-			Group("month")
+		Model(&Transaction{}).
+		Select("DATE_TRUNC(?, transaction_date) AS month, SUM(amount) AS total", groupBy).
+		Where("user_id = ?", userID).
+		Group("month")
 
 	if err := query.Scan(&aggregated).Error; err != nil {
 		s.logger.Error("Failed to get aggregated transactions", "error", err)

@@ -263,7 +263,7 @@ func (s *Service) GetRecurringExpenses(ctx context.Context, userID uuid.UUID) ([
 	for _, rec := range recurringExpenses {
 		responses = append(responses, RecurringExpenseResponse{
 			RecurringExpense: rec,
-			DaysUntilDue:    rec.DaysUntilNextDue(time.Now()),
+			DaysUntilDue:     rec.DaysUntilNextDue(time.Now()),
 		})
 	}
 	return responses, nil
@@ -402,7 +402,7 @@ func (s *Service) GetRecurringExpenseByID(ctx context.Context, userID uuid.UUID,
 	}
 	return &RecurringExpenseResponse{
 		RecurringExpense: recurringExpense,
-		DaysUntilDue:    recurringExpense.DaysUntilNextDue(time.Now()),
+		DaysUntilDue:     recurringExpense.DaysUntilNextDue(time.Now()),
 	}, nil
 }
 
@@ -430,7 +430,7 @@ func (s *Service) GetRecurringExpenseHistory(ctx context.Context, userID uuid.UU
 * @param userID - The ID of the user
 * @param dueInterval - The number of days to check for upcoming expenses
 * @returns A list of upcoming recurring expenses
-*/
+ */
 func (s *Service) GetUpcomingRecurringExpenses(ctx context.Context, userID uuid.UUID, dueInterval int) ([]RecurringExpenseResponse, error) {
 	var recurringExpenses []RecurringExpense
 	// Calculate the target date in Go and pass it as a parameter
@@ -455,12 +455,11 @@ func (s *Service) GetUpcomingRecurringExpenses(ctx context.Context, userID uuid.
 	for i, re := range recurringExpenses {
 		result[i] = RecurringExpenseResponse{
 			RecurringExpense: re,
-			DaysUntilDue:    re.DaysUntilNextDue(time.Now()),
+			DaysUntilDue:     re.DaysUntilNextDue(time.Now()),
 		}
 	}
 	return result, nil
 }
-
 
 /* Background Job to process all recurring expenses that are due as of the current time.
  *

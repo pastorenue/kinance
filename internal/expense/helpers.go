@@ -28,4 +28,3 @@ func getUserAndExpenseID(c *gin.Context) (uuid.UUID, uuid.UUID, bool) {
 	}
 	return userID, expenseID, true
 }
-

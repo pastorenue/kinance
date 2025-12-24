@@ -45,14 +45,6 @@ docker-restart:
 	make docker-stop
 	make docker-run
 
-.PHONY: migrate
-migrate-up:
-	migrate -path migrations -database "postgres://finfam:finfam123@localhost:5434/finfam?sslmode=disable" up
-
-.PHONY: migrate-down
-migrate-down:
-	migrate -path migrations -database "postgres://finfam:finfam123@localhost:5434/finfam?sslmode=disable" down
-
 .PHONY: deps
 deps:
 	go mod download
@@ -68,8 +60,8 @@ lint:
 
 .PHONY: dev-setup
 dev-setup:
-	docker-compose up -d postgres redis
-	make migrate-up
+	docker-compose down
+	docker-compose up -d
 
 .PHONY: docs
 docs:

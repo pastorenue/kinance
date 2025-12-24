@@ -17,30 +17,30 @@ const (
 type ReportType string
 
 const (
-	ReportTypeExpenseSummary ReportType = "expense_summary"
-	ReportTypeIncomeReport   ReportType = "income_report"
-	ReportTypeBudgetReport   ReportType = "budget_report"
-	ReportTypeTaxReport      ReportType = "tax_report"
+	ReportTypeExpenseSummary   ReportType = "expense_summary"
+	ReportTypeIncomeReport     ReportType = "income_report"
+	ReportTypeBudgetReport     ReportType = "budget_report"
+	ReportTypeTaxReport        ReportType = "tax_report"
 	ReportTypeInvestmentReport ReportType = "investment_report"
-	ReportTypeCustomReport   ReportType = "custom_report"
+	ReportTypeCustomReport     ReportType = "custom_report"
 )
 
 type Statement struct {
 	common.BaseModel
-	UserID     string    `gorm:"index" json:"user_id"`
-	Description string    `json:"description"`
-	From       time.Time `json:"from"`
-	To         time.Time `json:"to"`
-	FileURL    string    `json:"file_url"`
-	Status     DocumentStatus `json:"status"`
+	UserID      string         `gorm:"index" json:"user_id"`
+	Description string         `json:"description"`
+	From        time.Time      `json:"from"`
+	To          time.Time      `json:"to"`
+	FileURL     string         `json:"file_url"`
+	Status      DocumentStatus `json:"status"`
 }
 
 type Report struct {
 	common.BaseModel
-	UserID     string    `gorm:"index" json:"user_id"`
-	Title      string    `json:"title"`
-	GeneratedAt time.Time `json:"generated_at"`
-	FileURL    string    `json:"file_url"`
-	Status     DocumentStatus `json:"status"`
-	ReportType ReportType `json:"report_type"`
+	UserID      string         `gorm:"index" json:"user_id"`
+	Title       string         `json:"title"`
+	GeneratedAt time.Time      `json:"generated_at"`
+	FileURL     string         `json:"file_url"`
+	Status      DocumentStatus `json:"status"`
+	ReportType  ReportType     `json:"report_type"`
 }

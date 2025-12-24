@@ -13,7 +13,7 @@ func (re *RecurringExpense) ShouldProcess() bool {
 	if !re.IsActive {
 		return false
 	}
-	
+
 	if re.EndDate != nil && time.Now().After(*re.EndDate) {
 		return false
 	}

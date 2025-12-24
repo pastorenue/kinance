@@ -15,15 +15,14 @@ type Category struct {
 	ColorCode        string     `gorm:"type:char(7)" json:"color_code"` // e.g., #RRGGBB
 }
 
-
 type CreateCategoryRequest struct {
-	Name           string  `json:"name" binding:"required"`
+	Name             string     `json:"name" binding:"required"`
 	ParentCategoryID *uuid.UUID `json:"parent_category_id,omitempty"`
-	ColorCode     string  `json:"color_code" binding:"omitempty,hexcolor|len=7"`
+	ColorCode        string     `json:"color_code" binding:"omitempty,hexcolor|len=7"`
 }
 
 type UpdateCategoryRequest struct {
-	Name           *string          `json:"name"`
-	ParentCategoryID *uuid.UUID      `json:"parent_category_id,omitempty"`
-	ColorCode     *string         `json:"color_code" binding:"omitempty,hexcolor|len=7"`
+	Name             *string    `json:"name"`
+	ParentCategoryID *uuid.UUID `json:"parent_category_id,omitempty"`
+	ColorCode        *string    `json:"color_code" binding:"omitempty,hexcolor|len=7"`
 }
