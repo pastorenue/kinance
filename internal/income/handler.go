@@ -25,8 +25,8 @@ func (h *Handler) CreateIncome(c *gin.Context) {
 	if err := c.ShouldBindJSON(&req); err != nil {
 		h.service.logger.Error("Failed to bind JSON", "error", err)
 		c.JSON(http.StatusBadRequest, common.APIResponse{
-			Success: false,
-			Error:   "Invalid request",
+			Success:    false,
+			Error:      "Invalid request",
 			StatusCode: http.StatusBadRequest,
 		})
 		return
@@ -34,25 +34,25 @@ func (h *Handler) CreateIncome(c *gin.Context) {
 	income, err := h.service.CreateIncome(c.Request.Context(), userID.(uuid.UUID), &req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, common.APIResponse{
-			Success: false,
-			Error:   "Failed to create income",
+			Success:    false,
+			Error:      "Failed to create income",
 			StatusCode: http.StatusInternalServerError,
 		})
 		return
 	}
 	c.JSON(http.StatusCreated, common.APIResponse{
-		Success:   true,
-		Data:     income,
+		Success:    true,
+		Data:       income,
 		StatusCode: http.StatusCreated,
 	})
 }
 
-func (h *Handler) GetIncomes(c *gin.Context)   {
+func (h *Handler) GetIncomes(c *gin.Context) {
 	userID, _ := c.Get(middleware.UserIDKey)
 	if userID == nil {
 		c.JSON(http.StatusUnauthorized, common.APIResponse{
-			Success: false,
-			Error:   "User not authenticated",
+			Success:    false,
+			Error:      "User not authenticated",
 			StatusCode: http.StatusUnauthorized,
 		})
 		return
@@ -65,16 +65,16 @@ func (h *Handler) GetIncomes(c *gin.Context)   {
 	result, err := h.service.GetIncomes(c.Request.Context(), userID.(uuid.UUID), &pagination)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, common.APIResponse{
-			Success: false,
-			Error:   "Failed to fetch incomes",
+			Success:    false,
+			Error:      "Failed to fetch incomes",
 			StatusCode: http.StatusInternalServerError,
 		})
 		return
 	}
 
 	c.JSON(http.StatusOK, common.APIResponse{
-		Success:   true,
-		Data:      result,
+		Success:    true,
+		Data:       result,
 		StatusCode: http.StatusOK,
 	})
 }
@@ -83,8 +83,8 @@ func (h *Handler) GetIncomeByID(c *gin.Context) {
 	userID, _ := c.Get(middleware.UserIDKey)
 	if userID == nil {
 		c.JSON(http.StatusUnauthorized, common.APIResponse{
-			Success: false,
-			Error:   "User not authenticated",
+			Success:    false,
+			Error:      "User not authenticated",
 			StatusCode: http.StatusUnauthorized,
 		})
 		return
@@ -94,8 +94,8 @@ func (h *Handler) GetIncomeByID(c *gin.Context) {
 	incomeID, err := uuid.Parse(incomeIDParam)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, common.APIResponse{
-			Success: false,
-			Error:   "Invalid income ID",
+			Success:    false,
+			Error:      "Invalid income ID",
 			StatusCode: http.StatusBadRequest,
 		})
 		return
@@ -104,16 +104,16 @@ func (h *Handler) GetIncomeByID(c *gin.Context) {
 	income, err := h.service.GetIncomeByID(c.Request.Context(), userID.(uuid.UUID), incomeID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, common.APIResponse{
-			Success: false,
-			Error:   "Failed to fetch income",
+			Success:    false,
+			Error:      "Failed to fetch income",
 			StatusCode: http.StatusInternalServerError,
 		})
 		return
 	}
 
 	c.JSON(http.StatusOK, common.APIResponse{
-		Success:   true,
-		Data:      income,
+		Success:    true,
+		Data:       income,
 		StatusCode: http.StatusOK,
 	})
 }
@@ -129,8 +129,8 @@ func (h *Handler) CreateSource(c *gin.Context) {
 	if err := c.ShouldBindJSON(&req); err != nil {
 		h.service.logger.Error("Failed to bind JSON", "error", err)
 		c.JSON(http.StatusBadRequest, common.APIResponse{
-			Success: false,
-			Error:   "Invalid request",
+			Success:    false,
+			Error:      "Invalid request",
 			StatusCode: http.StatusBadRequest,
 		})
 		return
@@ -140,16 +140,16 @@ func (h *Handler) CreateSource(c *gin.Context) {
 	if err != nil {
 		h.service.logger.Error("Failed to create source", "error", err)
 		c.JSON(http.StatusInternalServerError, common.APIResponse{
-			Success: false,
-			Error:   "Failed to create source",
+			Success:    false,
+			Error:      "Failed to create source",
 			StatusCode: http.StatusInternalServerError,
 		})
 		return
 	}
 
 	c.JSON(http.StatusCreated, common.APIResponse{
-		Success:   true,
-		Data:      source,
+		Success:    true,
+		Data:       source,
 		StatusCode: http.StatusCreated,
 	})
 }
@@ -161,16 +161,16 @@ func (h *Handler) GetSources(c *gin.Context) {
 	if err != nil {
 		h.service.logger.Error("Failed to fetch sources", "error", err)
 		c.JSON(http.StatusInternalServerError, common.APIResponse{
-			Success: false,
-			Error:   "Failed to fetch sources",
+			Success:    false,
+			Error:      "Failed to fetch sources",
 			StatusCode: http.StatusInternalServerError,
 		})
 		return
 	}
 
 	c.JSON(http.StatusOK, common.APIResponse{
-		Success:   true,
-		Data:      result,
+		Success:    true,
+		Data:       result,
 		StatusCode: http.StatusOK,
 	})
 }
@@ -182,8 +182,8 @@ func (h *Handler) GetSourceBySwiftCode(c *gin.Context) {
 	// Validate swiftCode format
 	if !isValidSwiftCode(swiftCode) {
 		c.JSON(http.StatusBadRequest, common.APIResponse{
-			Success: false,
-			Error:   "Invalid SWIFT code format",
+			Success:    false,
+			Error:      "Invalid SWIFT code format",
 			StatusCode: http.StatusBadRequest,
 		})
 		return
@@ -193,24 +193,24 @@ func (h *Handler) GetSourceBySwiftCode(c *gin.Context) {
 	if err != nil {
 		h.service.logger.Error("Failed to fetch source", "error", err)
 		c.JSON(http.StatusInternalServerError, common.APIResponse{
-			Success: false,
-			Error:   "Failed to fetch source",
+			Success:    false,
+			Error:      "Failed to fetch source",
 			StatusCode: http.StatusInternalServerError,
 		})
 		return
 	}
 	if source == nil {
 		c.JSON(http.StatusNotFound, common.APIResponse{
-			Success: false,
-			Error:   "Source not found",
+			Success:    false,
+			Error:      "Source not found",
 			StatusCode: http.StatusNotFound,
 		})
 		return
 	}
 
 	c.JSON(http.StatusOK, common.APIResponse{
-		Success:   true,
-		Data:      source,
+		Success:    true,
+		Data:       source,
 		StatusCode: http.StatusOK,
 	})
 }
@@ -235,8 +235,8 @@ func (h *Handler) UpdateSource(c *gin.Context) {
 	if err := c.ShouldBindJSON(&req); err != nil {
 		h.service.logger.Error("Failed to bind JSON", "error", err)
 		c.JSON(http.StatusBadRequest, common.APIResponse{
-			Success: false,
-			Error:   "Invalid request",
+			Success:    false,
+			Error:      "Invalid request",
 			StatusCode: http.StatusBadRequest,
 		})
 		return
@@ -246,16 +246,16 @@ func (h *Handler) UpdateSource(c *gin.Context) {
 	if err != nil {
 		h.service.logger.Error("Failed to update source", "error", err)
 		c.JSON(http.StatusInternalServerError, common.APIResponse{
-			Success: false,
-			Error:   "Failed to update source",
+			Success:    false,
+			Error:      "Failed to update source",
 			StatusCode: http.StatusInternalServerError,
 		})
 		return
 	}
 
 	c.JSON(http.StatusOK, common.APIResponse{
-		Success:   true,
-		Data:      source,
+		Success:    true,
+		Data:       source,
 		StatusCode: http.StatusOK,
 	})
 }

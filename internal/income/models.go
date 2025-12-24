@@ -27,14 +27,14 @@ type Source struct {
 type Income struct {
 	common.BaseModel
 	Amount     decimal.Decimal    `json:"amount" gorm:"type:decimal(20,8);not null"`
-	Currency  *common.Currency   `json:"currency" gorm:"not null;default:EUR"`
+	Currency   *common.Currency   `json:"currency" gorm:"not null;default:EUR"`
 	SourceID   uuid.UUID          `json:"source" gorm:"index;not null"`
 	Source     *Source            `json:"source_details" gorm:"foreignKey:SourceID"`
 	UserID     uuid.UUID          `json:"user_id" gorm:"type:varchar(36);not null"`
 	Status     IncomeStatus       `json:"status" gorm:"default:'pending'"`
 	Note       string             `json:"note" gorm:"type:text"`
 	Metadata   string             `json:"metadata" gorm:"type:text"`
-	CategoryID uuid.UUID         `json:"category_id" gorm:"index"`
+	CategoryID uuid.UUID          `json:"category_id" gorm:"index"`
 	Category   *category.Category `json:"category" gorm:"foreignKey:CategoryID"`
 }
 

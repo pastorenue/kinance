@@ -39,9 +39,9 @@ func (h *Handler) CreateCategory(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusCreated, common.APIResponse{
-		Success:   true,
+		Success:    true,
 		StatusCode: http.StatusCreated,
-		Data:      category,
+		Data:       category,
 	})
 }
 
@@ -51,16 +51,16 @@ func (h *Handler) GetCategories(c *gin.Context) {
 	categories, err := h.service.GetCategories(c.Request.Context(), userID.(uuid.UUID))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, common.APIResponse{
-			Success:   false,
+			Success:    false,
 			StatusCode: http.StatusInternalServerError,
-			Error:     err.Error(),
+			Error:      err.Error(),
 		})
 		return
 	}
 
 	c.JSON(http.StatusOK, common.APIResponse{
-		Success:   true,
-		Data:      categories,
+		Success:    true,
+		Data:       categories,
 		StatusCode: http.StatusOK,
 	})
 }
@@ -74,8 +74,8 @@ func (h *Handler) GetCategoryByID(c *gin.Context) {
 	category, err := h.service.GetCategoryByID(c.Request.Context(), userID, categoryID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, common.APIResponse{
-			Success:   false,
-			Error:     err.Error(),
+			Success:    false,
+			Error:      err.Error(),
 			StatusCode: http.StatusInternalServerError,
 		})
 		return
@@ -101,16 +101,16 @@ func (h *Handler) UpdateCategory(c *gin.Context) {
 	category, err := h.service.UpdateCategory(c.Request.Context(), userID, categoryID, &req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, common.APIResponse{
-			Success:   false,
-			Error:     err.Error(),
+			Success:    false,
+			Error:      err.Error(),
 			StatusCode: http.StatusInternalServerError,
 		})
 		return
 	}
 
 	c.JSON(http.StatusOK, common.APIResponse{
-		Success:   true,
-		Data:      category,
+		Success:    true,
+		Data:       category,
 		StatusCode: http.StatusOK,
 	})
 }
@@ -124,20 +124,19 @@ func (h *Handler) DeleteCategory(c *gin.Context) {
 	err := h.service.DeleteCategory(c.Request.Context(), userID, categoryID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, common.APIResponse{
-			Success:   false,
-			Error:     err.Error(),
+			Success:    false,
+			Error:      err.Error(),
 			StatusCode: http.StatusInternalServerError,
 		})
 		return
 	}
 
 	c.JSON(http.StatusOK, common.APIResponse{
-		Success:   true,
-		Data:      "Category deleted successfully",
+		Success:    true,
+		Data:       "Category deleted successfully",
 		StatusCode: http.StatusOK,
 	})
 }
-
 
 // getUserAndCategoryID extracts userID and categoryID from context and returns them, or writes an error response and returns false.
 func getUserAndCategoryID(c *gin.Context) (uuid.UUID, uuid.UUID, bool) {

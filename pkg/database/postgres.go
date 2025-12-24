@@ -7,22 +7,23 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 
-"github.com/pastorenue/kinance/internal/budget"
+	"github.com/pastorenue/kinance/internal/budget"
 	"github.com/pastorenue/kinance/internal/expense"
+
 	// "github.com/pastorenue/kinance/internal/receipt"
+	"github.com/pastorenue/kinance/internal/category"
+	"github.com/pastorenue/kinance/internal/income"
 	"github.com/pastorenue/kinance/internal/transaction"
 	"github.com/pastorenue/kinance/internal/user"
 	"github.com/pastorenue/kinance/pkg/config"
-	"github.com/pastorenue/kinance/internal/category"
-	"github.com/pastorenue/kinance/internal/income"
 )
 
 func NewPostgres(cfg config.DatabaseConfig) (*gorm.DB, error) {
 	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%d sslmode=%s",
 		cfg.Host, cfg.User, cfg.Password, cfg.DBName, cfg.Port, cfg.SSLMode)
-
+	fmt.Println(dsn)
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
-		Logger: logger.Default.LogMode(logger.Info),
+		Logger: logger.Default.LogMode(logger.Warn),
 	})
 	if err != nil {
 		return nil, err
@@ -44,7 +45,7 @@ func NewPostgres(cfg config.DatabaseConfig) (*gorm.DB, error) {
 		&budget.Budget{},
 		&transaction.Transaction{},
 		&income.Income{},
-		// &transaction.Tag{},
+		&transaction.Tag{},
 		// &receipt.Receipt{},
 		// &receipt.ReceiptItem{},
 	)
@@ -99,7 +100,7 @@ func DropAllTables(db *gorm.DB) error {
 		&expense.Expense{},
 		&budget.Budget{},
 		&transaction.Transaction{},
-		// &transaction.Tag{},
+		&transaction.Tag{},
 		// &receipt.Receipt{},
 		// &receipt.ReceiptItem{},
 		&income.Income{},

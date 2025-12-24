@@ -69,14 +69,14 @@ type CreateTransactionRequest struct {
 	TransactionDate time.Time              `json:"transaction_date" binding:"required"`
 	Type            TransactionType        `json:"type" binding:"required"`
 	Tags            []string               `json:"tags"`
-	Currency        common.Currency       `json:"currency" binding:"required,oneof=USD EUR GBP JPY CHF NGN"`
+	Currency        common.Currency        `json:"currency" binding:"required,oneof=USD EUR GBP JPY CHF NGN"`
 	PaymentMethod   common.PaymentMethod   `json:"payment_method" binding:"required,oneof=cash card bank_transfer"`
 	Metadata        map[string]interface{} `json:"metadata"`
 }
 
 type TransactionResponse struct {
-	StatusCode int             `json:"status_code"`
-	Message    string          `json:"message"`
+	StatusCode  int         `json:"status_code"`
+	Message     string      `json:"message"`
 	Transaction Transaction `json:"transaction"`
-	Entity     interface{} `json:"entity"`
+	Entity      interface{} `json:"entity"`
 }

@@ -18,7 +18,6 @@ func NewHandler(service *Service) *Handler {
 	return &Handler{service: service}
 }
 
-
 func (h *Handler) CreateExpense(c *gin.Context) {
 	userID, _ := c.Get(middleware.UserIDKey)
 
@@ -157,7 +156,7 @@ func (h *Handler) GetExpensesByCategoryID(c *gin.Context) {
 		pagination = common.PaginationParams{Page: 1, PageSize: 20}
 	}
 
-expenses, err := h.service.GetExpensesByCategoryID(c.Request.Context(), userID.(uuid.UUID), categoryID)
+	expenses, err := h.service.GetExpensesByCategoryID(c.Request.Context(), userID.(uuid.UUID), categoryID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, common.APIResponse{
 			Success: false,
@@ -178,9 +177,9 @@ func (h *Handler) CreateRecurringExpense(c *gin.Context) {
 	var req CreateRecurringExpenseRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, common.APIResponse{
-			Success:   false,
+			Success:    false,
 			StatusCode: http.StatusBadRequest,
-			Error:     err.Error(),
+			Error:      err.Error(),
 		})
 		return
 	}
@@ -188,17 +187,17 @@ func (h *Handler) CreateRecurringExpense(c *gin.Context) {
 	result, err := h.service.CreateRecurringExpense(c.Request.Context(), userID.(uuid.UUID), &req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, common.APIResponse{
-			Success:   false,
+			Success:    false,
 			StatusCode: http.StatusInternalServerError,
-			Error:     err.Error(),
+			Error:      err.Error(),
 		})
 		return
 	}
 
 	c.JSON(http.StatusCreated, common.APIResponse{
-		Success:   true,
+		Success:    true,
 		StatusCode: http.StatusCreated,
-		Data:      result,
+		Data:       result,
 	})
 }
 
@@ -210,20 +209,20 @@ func (h *Handler) GetRecurringExpenses(c *gin.Context) {
 		pagination = common.PaginationParams{Page: 1, PageSize: 20}
 	}
 
-result, err := h.service.GetRecurringExpenses(c.Request.Context(), userID.(uuid.UUID))
+	result, err := h.service.GetRecurringExpenses(c.Request.Context(), userID.(uuid.UUID))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, common.APIResponse{
-			Success:   false,
+			Success:    false,
 			StatusCode: http.StatusInternalServerError,
-			Error:     err.Error(),
+			Error:      err.Error(),
 		})
 		return
 	}
 
 	c.JSON(http.StatusOK, common.APIResponse{
-		Success:   true,
+		Success:    true,
 		StatusCode: http.StatusOK,
-		Data:      result,
+		Data:       result,
 	})
 }
 
@@ -232,9 +231,9 @@ func (h *Handler) GetRecurringExpenseByID(c *gin.Context) {
 	recurringExpenseID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, common.APIResponse{
-			Success:   false,
+			Success:    false,
 			StatusCode: http.StatusBadRequest,
-			Error:     "Invalid recurring expense ID",
+			Error:      "Invalid recurring expense ID",
 		})
 		return
 	}
@@ -242,17 +241,17 @@ func (h *Handler) GetRecurringExpenseByID(c *gin.Context) {
 	result, err := h.service.GetRecurringExpenseByID(c.Request.Context(), userID.(uuid.UUID), recurringExpenseID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, common.APIResponse{
-			Success:   false,
+			Success:    false,
 			StatusCode: http.StatusInternalServerError,
-			Error:     err.Error(),
+			Error:      err.Error(),
 		})
 		return
 	}
 
 	c.JSON(http.StatusOK, common.APIResponse{
-		Success:   true,
+		Success:    true,
 		StatusCode: http.StatusOK,
-		Data:	  result,
+		Data:       result,
 	})
 }
 
@@ -261,9 +260,9 @@ func (h *Handler) UpdateRecurringExpense(c *gin.Context) {
 	recurringExpenseID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, common.APIResponse{
-			Success:   false,
+			Success:    false,
 			StatusCode: http.StatusBadRequest,
-			Error:     "Invalid recurring expense ID",
+			Error:      "Invalid recurring expense ID",
 		})
 		return
 	}
@@ -271,9 +270,9 @@ func (h *Handler) UpdateRecurringExpense(c *gin.Context) {
 	var req UpdateRecurringExpenseRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, common.APIResponse{
-			Success:   false,
+			Success:    false,
 			StatusCode: http.StatusBadRequest,
-			Error:     err.Error(),
+			Error:      err.Error(),
 		})
 		return
 	}
@@ -281,17 +280,17 @@ func (h *Handler) UpdateRecurringExpense(c *gin.Context) {
 	result, err := h.service.UpdateRecurringExpense(c.Request.Context(), userID.(uuid.UUID), recurringExpenseID, &req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, common.APIResponse{
-			Success:   false,
+			Success:    false,
 			StatusCode: http.StatusInternalServerError,
-			Error:     err.Error(),
+			Error:      err.Error(),
 		})
 		return
 	}
-	
+
 	c.JSON(http.StatusOK, common.APIResponse{
-		Success:   true,
+		Success:    true,
 		StatusCode: http.StatusOK,
-		Data:      result,
+		Data:       result,
 	})
 }
 
@@ -300,9 +299,9 @@ func (h *Handler) DeleteRecurringExpense(c *gin.Context) {
 	recurringExpenseID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, common.APIResponse{
-			Success:   false,
+			Success:    false,
 			StatusCode: http.StatusBadRequest,
-			Error:     "Invalid recurring expense ID",
+			Error:      "Invalid recurring expense ID",
 		})
 		return
 	}
@@ -310,17 +309,17 @@ func (h *Handler) DeleteRecurringExpense(c *gin.Context) {
 	err = h.service.DeleteRecurringExpense(c.Request.Context(), userID.(uuid.UUID), recurringExpenseID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, common.APIResponse{
-			Success:   false,
+			Success:    false,
 			StatusCode: http.StatusInternalServerError,
-			Error:     err.Error(),
+			Error:      err.Error(),
 		})
 		return
 	}
 
 	c.JSON(http.StatusOK, common.APIResponse{
-		Success:   true,
+		Success:    true,
 		StatusCode: http.StatusOK,
-		Data:      "Recurring expense deleted successfully",
+		Data:       "Recurring expense deleted successfully",
 	})
 }
 
@@ -330,9 +329,9 @@ func (h *Handler) GetRecurringExpenseHistory(c *gin.Context) {
 
 	if err != nil {
 		c.JSON(http.StatusBadRequest, common.APIResponse{
-			Success:   false,
+			Success:    false,
 			StatusCode: http.StatusBadRequest,
-			Error:     "Invalid recurring expense ID",
+			Error:      "Invalid recurring expense ID",
 		})
 		return
 	}
@@ -340,17 +339,17 @@ func (h *Handler) GetRecurringExpenseHistory(c *gin.Context) {
 	result, err := h.service.GetRecurringExpenseHistory(c.Request.Context(), userID.(uuid.UUID), recurringExpenseID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, common.APIResponse{
-			Success:   false,
+			Success:    false,
 			StatusCode: http.StatusInternalServerError,
-			Error:     err.Error(),
+			Error:      err.Error(),
 		})
 		return
 	}
 
 	c.JSON(http.StatusOK, common.APIResponse{
-		Success:   true,
+		Success:    true,
 		StatusCode: http.StatusOK,
-		Data:      result,
+		Data:       result,
 	})
 }
 func (h *Handler) GetUpcomingRecurringExpenses(c *gin.Context) {
@@ -362,9 +361,9 @@ func (h *Handler) GetUpcomingRecurringExpenses(c *gin.Context) {
 		interval, err = strconv.Atoi(intervalStr)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, common.APIResponse{
-				Success:   false,
+				Success:    false,
 				StatusCode: http.StatusBadRequest,
-				Error:     "Invalid interval parameter",
+				Error:      "Invalid interval parameter",
 			})
 			return
 		}
@@ -374,16 +373,16 @@ func (h *Handler) GetUpcomingRecurringExpenses(c *gin.Context) {
 	result, err := h.service.GetUpcomingRecurringExpenses(c.Request.Context(), userID.(uuid.UUID), interval)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, common.APIResponse{
-			Success:   false,
+			Success:    false,
 			StatusCode: http.StatusInternalServerError,
-			Error:     err.Error(),
+			Error:      err.Error(),
 		})
 		return
 	}
 
 	c.JSON(http.StatusOK, common.APIResponse{
-		Success:   true,
+		Success:    true,
 		StatusCode: http.StatusOK,
-		Data:      result,
+		Data:       result,
 	})
 }

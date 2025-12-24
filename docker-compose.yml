@@ -5,14 +5,14 @@ networks:
 
 services:
   kinance_db:
-    container_name: kinance_db
+    container_name: kinancedb
     image: postgres:15
     environment:
       POSTGRES_DB: finfam
       POSTGRES_USER: finfam
       POSTGRES_PASSWORD: finfam123
     ports:
-      - "5434:5432"
+      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
@@ -22,7 +22,7 @@ services:
     container_name: kinance_redis
     image: redis:7-alpine
     ports:
-      - "6399:6379"
+      - "6379:6379"
     volumes:
       - redis_data:/data
     networks:
