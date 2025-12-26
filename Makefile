@@ -1,13 +1,16 @@
-.PHONY: build-app run-app test clean docker-build docker-run migrate
+ENV ?= test
+LAMBDA_ENABLED ?= 0
 
 .PHONY: build-app
 build-app:
 	go build -o bin/api cmd/api/main.go
-	go build -o bin/worker cmd/worker/main.go
+ifeq ($(LAMBDA_ENABLED), 1)
+	zip api.zip bin/api
+endif
 
-.PHONY: run-app
-run-app:
-	go run cmd/api/main.go
+.PHONY: run
+run:
+	DB_HOST=localhost SERVER_PORT=8080  air -c .air.toml
 
 .PHONY: into_db
 into_db:
@@ -66,3 +69,38 @@ dev-setup:
 .PHONY: docs
 docs:
 	swag init -g cmd/api/main.go
+
+.PHONY: redis-cli
+redis-cli:
+	docker-compose exec -it kinance_redis redis-cli -h localhost -p 6379
+
+.PHONY: tf-init
+ifeq ($(ENV), test)
+tf-init:
+	tflocal -chdir=infra/env/test/ init
+else
+tf-init:
+	@echo "Not ready ..."
+endif
+
+.PHONY: tf-plan
+ifeq ($(ENV), test) 
+tf-plan:
+	tflocal -chdir=infra/env/test/ plan
+else
+tf-plan:
+	@echo "Not ready ..."
+endif
+
+.PHONY: tf-apply
+ifeq ($(ENV), test) 
+tf-apply:
+	tflocal -chdir=infra/env/test/ apply -auto-approve
+else
+tf-apply:
+	@echo "Not ready ..."
+endif
+
+.PHONY: lstack-run
+lstack-run:
+	localstack 
