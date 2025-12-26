@@ -1,0 +1,5 @@
+version: "2"
+tunnels:
+  kinance-ssl:
+    proto: http
+    addr: localhost:4040 # replace with your internal service name and port

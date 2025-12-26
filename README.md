@@ -70,7 +70,7 @@ tests/
    ```
 5. **Run the application:**
    ```sh
-   make run-app
+   make run
    ```
 6. **Access API docs:**
    - Open [http://localhost:8080/docs](http://localhost:8080/docs) in your browser.

@@ -10,9 +10,16 @@ RUN CGO_ENABLED=0 GOOS=linux go build -o main cmd/api/main.go
 
 FROM alpine:latest
 RUN apk --no-cache add ca-certificates
-WORKDIR /root/
+WORKDIR /app/
 
-COPY --from=builder /app/main .
+# Create a non-root user
+RUN addgroup -g 1000 kinfam && \
+    adduser -D -u 1000 -G kinfam kinfam
+
+# Switch to non-root user
+USER kinfam
+COPY --from=builder /app/main /app/
+COPY --from=builder /app/api/docs/ /app/api/docs/
 
 EXPOSE 8080
 CMD ["./main"]
