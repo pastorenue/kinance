@@ -10,6 +10,7 @@ endif
 
 .PHONY: run
 run:
+
 	DB_HOST=localhost SERVER_PORT=8080  air -c .air.toml
 
 .PHONY: into_db
